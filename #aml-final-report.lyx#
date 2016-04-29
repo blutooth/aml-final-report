@@ -405,7 +405,7 @@ status open
 
 
 \begin_inset Graphics
-	filename Figures/trace_mcmc.png
+	filename Figures/compMCMC.png
 	scale 35
 
 \end_inset
