@@ -37,7 +37,7 @@
 
 \tableofcontents
 
-\todo{Proofread the paper for flow}
+%\todo{Proofread the paper for flow}
 
 \section{Introduction:}
 
@@ -424,7 +424,7 @@ With the SSE from the table and the speedup observed from the plots of number of
 
 % \todo{Make up some tables about effective sample size and how the reduction in likelihood evaluations is bigger than the drop in ESS}
 
-\todo{Reference the plots}
+%\todo{Reference the plots}
 
 \begin{figure}[htbp]
   \begin{subfigure}[t]{0.32\textwidth}
@@ -489,6 +489,36 @@ As a summary of the work undertaken, our practical implementation of Firefly MC 
 A thorough grounding  into the underpinning mathematical background of FlyMc was also given.
 
 We replicated almost almost all the graphs and figures in  the paper, however, we would have liked to generate more tabulated data on effective sample rates than we could have.
+
+Many extensions of the work we have presented are possible. One particularly
+important experiment would be to tune the lower bounds over multiple parameter
+values sampled from the posterior rather than the single MAP estimate. This
+would ensure a low number of expected bright points, even if we are possibly
+far away from the MAP estimate. Given the significant performance difference
+between MAP-tuned and untuned FlyMC, we expect
+tuning lower bounds in this manner to yield even lower numbers of bright points
+and hence greater speedups over traditional MCMC.
+
+Another direction for investigation is on the lower bounds $B_n$. The
+assumptions made in assumptions 1 and 2 on $B_n$ are required
+for formulating FlyMC, and the authors do a good first pass discussion about
+using exponential families for $B_n$. However, it may be interesting to
+consider other functional forms for $B_n$ such that $\prod_{n=1}^N B_n(\theta)$
+is cheap to compute. Furthermore, it is often the case that we are working with
+likelihoods $L(\theta)$ which do not have a well-known lower bound (e.g.\
+$L(\theta)$ could be parameterized by a deep neural network). In these
+situations, one would like any form of lower bound which is non-zero. Alternatively,
+one could investigate what happens when approximate bounds are used for $B_n(\theta)$
+where cite the 0 <= Bn <= 1 does not hold for all $\theta$.
+
+Finally, we would like to mention that although the motivation for this work
+is computing on big datasets with large $N$, most experiments presented here
+and in the paper were small and run on a single machine. For FlyMC to truly be
+impactful in big data applications, an implementation on a distributed
+computing platform (e.g.\ Spark, Hadoop) which demonstrates tractable MCMC on
+large datacenter-scale datasets would be a convincing and immediately useful
+line of work.
+
 
 \bibliographystyle{alpha}
 \nocite{*}
