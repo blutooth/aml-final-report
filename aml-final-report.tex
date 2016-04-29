@@ -6,10 +6,17 @@
 \usepackage{geometry}
 \geometry{verbose,tmargin=1cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
 \usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
+\usepackage{xcolor}
 \usepackage{esint}
+
+% Misc
+\newcommand{\todo}[1]{}
+\renewcommand{\todo}[1]{{\color{red} TODO\@: {#1}}}
 
 \makeatletter
 
@@ -17,24 +24,32 @@
 %% A simple dot to overcome graphicx limitations
 \newcommand{\lyxdot}{.}
 
-
 \makeatother
 
 \usepackage{babel}
+
 \begin{document}
-Introduction:
 
+\title{Firefly Monte Carlo: Exact MC with data subsets}
+\author{Feynman Liang, Max Chamberlin, Kai Xu}
 
-\section{The report should describe the rationale for selecting the paper
+\maketitle
+
+\tableofcontents
+
+\todo{Proofread the paper for flow}
+
+\section{Introduction:}
+
+\todo{The report should describe the rationale for selecting the paper
 and the particular experiments for replication}
-
 
 \subsubsection*{The idea:}
 
 The key motivation for FlyMC is to achieve speed-ups over typical
 MCMC, where we would like to sample some parameter $\theta$ of interest
 given datapoints $x_{1:N}$. FlyMC does this by estimating a large
-data-set's likelihood using smaller subsets of the data. 
+data-set's likelihood using smaller subsets of the data.
 
 To work, FlyMC requires a non-negative function $B_{n}(\theta)$ that
 acts as a lower bound on the likelihood, $B_{n}(\theta)\leq L_{n}(\theta)=P(x_{n}|\theta)$.
@@ -55,15 +70,15 @@ neatly summarised in the graph below:
 
 \begin{figure}[H]
 \begin{centering}
-\includegraphics[scale=0.4]{\string"Screen Shot 2016-04-29 at 17.14.50\string".png}
+\includegraphics[scale=0.4]{Figures/gap-fig.png}
 \par\end{centering}
 
-\protect\caption{Graphical representation of Sampling in Firefly Monte Carlo (http://www.auai.org/uai2014/proceedings/individuals/302.pdf)}
+    \protect\caption{Graphical representation of the decomposition of
+    $L_n)$ into a $L_n - B_n$ part associated with bright variables $z_n = 0$
+    and a $B_n$ part associated with dim variables $z_n = 0$ \cite{maclaurin2014firefly}}
 
 
 \end{figure}
-
-
 
 \subsubsection*{Rationale for selecting the paper: }
 
@@ -80,11 +95,11 @@ hierarchical models that require integrations over hundreds or even
 thousands of unknown parameters, which is an exciting area of further
 research. However, to make MCMC work quickly for data of the order
 of that seen in the 'Big Data' era, any speed-up that is possible
-would be well received. 
+would be well received.
 
 In addition to this, FlyMC is based on a mathematically elegant idea.
 The idea is that when performing inference, all that is necessary
-is to 
+is to
 
 
 \subsubsection*{The Experiments to be replicated: }
@@ -95,18 +110,18 @@ In this practical, we conducted the following three experiments:
 \begin{itemize}
 \item Logistic regression: For this particular task, we tested we tested
 FlyMC's preformance for the task of classifying 7s and 9s on MNIST,
-with prior $P(\theta)\sim\mathcal{N}(0,I)$. 
+with prior $P(\theta)\sim\mathcal{N}(0,I)$.
 \item Softmax classification: For this task, we tested FlyMC's ability to
 fit a softmax classification model on three CIFAR-10 classes (airplane,
-automobile and bird) using Langevin dynamics 
+automobile and bird) using Langevin dynamics
 \item Robust linear regression: For logistic regression task, we generated
 synthetic data and evaluated the performance of FlyMC in comparison
-to regular MCMC. 
+to regular MCMC.
 \end{itemize}
 The first two of these three experiments were data-sets used in the
 paper. However, for the third data-set we decided it would be intersting
 to see if the same results claimed by a paper could be found in a
-data-set that was not hand-picked by the authors. 
+data-set that was not hand-picked by the authors.
 
 
 \section*{Main Body }
@@ -129,7 +144,7 @@ posterior distribution $P(\theta|X)\propto P(X|\theta)P(\theta)$one
 needs to compute the acceptance probability:
 
 \[
-A(\theta'|\theta)=\min\left\{ 1,\frac{q(\theta|\theta')L(\theta')P(\theta')}{q(\theta'|\theta)L(\theta)P(\theta)}\right\} 
+A(\theta'|\theta)=\min\left\{ 1,\frac{q(\theta|\theta')L(\theta')P(\theta')}{q(\theta'|\theta)L(\theta)P(\theta)}\right\}
 \]
 
 
@@ -349,22 +364,24 @@ sampling scheme for sampling brightness variables $z_{i}$.
 
 However, the only full example provided is a logistic regression example
 on toy data and is insufficient for reproducing the results reported
-in the paper. We forked%
-\footnote{https://github.com/feynmanliang/firefly-monte-carlo%
-} the authors' code and added our own modifications, most importantly:
+in the paper. We forked
+he authors' code \footnote{https://github.com/feynmanliang/firefly-monte-carlo%
+} and added our own modifications, most importantly:
 \begin{enumerate}
 \item Support for MAP-tuning of the lower bounds, using scipy.optimize
 for MAP estimation
 \item Implementation of regular full-dataset MCMC, which is achieved by
 fixing $\forall i:z_{i}=1$
+\item Improved numerical overflow handling in \texttt{LogisticModel}
 \item Instrumentation for counting log-likelihood evaluations and outputting
 traces of chain state and log likelihood per iteration
 \item Integration, parameter tuning, and reproduction of MNIST Logistic
 Regression, CIFAR-10 Softmax Classification, and Robust Linear Regression
 experimental results
 \end{enumerate}
+
 We also fixed a significant bug in some caching code provided with
-the reference implementation and submitted a pull-request upstream%
+the reference implementation and submitted our bugfix back upstream
 \footnote{https://github.com/HIPS/firefly-monte-carlo/pull/1%
 }. The problem was that computations of $\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $were
 being cached for vectors $\theta$ and $idx$, but that caching was
@@ -377,58 +394,66 @@ each iteration, which means that FlyMC will only offer speedups if
 $\#X_{bright}<\frac{N}{2}$.
 
 
-\section*{Results: }
-\begin{enumerate}
-\item Autocorrelation Logistic Regression
+\section*{Results:}
 
-\begin{enumerate}
-\item 
-\begin{figure}[H]
-\includegraphics[scale=0.35]{Figures/acf_logistic.png}
+\todo{Provide analysis}
 
-\protect\caption{Autocorrelation Logistic Regression}
+\todo{Make up some tables about effective sample size and how the reduction
+in likelihood evaluations is bigger than the drop in ESS}
 
-
+\begin{figure}[htbp]
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/logi_corr.png}
+    \caption{Autocorrelation}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/logi_lik.png}
+    \caption{Negative log posterior}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/logi_numlik.png}
+    \caption{Number likelihood evaluations}
+  \end{subfigure}
+  \caption{Logistic regression binary classification on MNIST with MH-MCMC}
 \end{figure}
 
-\end{enumerate}
-\item Evaluations per iteration: 
-
-\begin{enumerate}
-\item 
-\begin{figure}[H]
-\includegraphics[scale=0.35]{Figures/evals_per_iter.png}
-
-\protect\caption{Evaluations Per Iteration}
+\begin{figure}[htbp]
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/soft_corr.png}
+    \caption{Autocorrelation}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/soft_lik.png}
+    \caption{Negative log posterior}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/soft_numlik.png}
+    \caption{Number likelihood evaluations}
+  \end{subfigure}
+  \caption{Softmax 3-way classification on CIFAR-10 with Langevin dynamics}
 \end{figure}
 
-\end{enumerate}
-\item Log Posterior
-
-\begin{enumerate}
-\item 
-\begin{figure}[H]
-\includegraphics[scale=0.35]{Figures/neg_log_posterior.png}
-
-\protect\caption{Evaluations Per Iteration}
+\begin{figure}[htbp]
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/reg_corr.png}
+    \caption{Autocorrelation}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/reg_lik.png}
+    \caption{Negative log posterior}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/reg_numlik.png}
+    \caption{Number likelihood evaluations}
+  \end{subfigure}
+  \caption{Robust regression on synthesized data with slice sampler}
 \end{figure}
 
-\end{enumerate}
-\item Mix IN
-
-\begin{enumerate}
-\item 
-\begin{figure}[H]
-\includegraphics[scale=0.35]{Figures/trace_flymap.png}\includegraphics[scale=0.35]{Figures/compMCMC}
-
-\protect\caption{Evaluations Per Iteration}
-\end{figure}
-
-\end{enumerate}
-\item For the Cifar data, we omit to plot autocorrelation
-\end{enumerate}
 
 \section*{Conclusion }
+
+\todo{Write this section, make sure the mention extension work including: minimizing bound over posterior samples
+instead of MAP tuning (see  ```MAP-tuning the lower bound'')}
 
 \textbf{You should end by critically evaluating your work and suggest
 what you would have done given more time.}
@@ -442,11 +467,20 @@ addition, FlyMC:
 
 -Motivations for why we should be interested in FlyMC
 
-We 
+We
 
 Main Body: -Mathematical motivations for FLYMC as well as implementations
 
-Results: Graphs Generated. 
+Results: Graphs Generated.
 
 Conclusion:
+
+
+
+\bibliographystyle{alpha}
+\nocite{*}
+\bibliography{refs.bib}
+
+\onecolumn
+
 \end{document}
