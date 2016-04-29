@@ -391,7 +391,7 @@ each iteration, which means that FlyMC will only offer speedups if
 $\#X_{bright}<\frac{N}{2}$.
 
 
-\section{Results:}
+\section{Results}
 
 The plots of autocorrelation from the three data-sets display the same  general trends. The autocorrelation curve for MCMC is below that of FlyMC and FlyMap. These results tend to show that FlyMC variant tends to produce samples $\theta$ that have have a greater dependence between themselves. This is unsurprising given that there are fewer likelihood evaluations at each step of FlyMC, which means that there are fewer updates to the posterior of $ p(\theta\ | \theta ) $. 
 
@@ -403,11 +403,28 @@ That not withstanding, in all cases FLyMC computes  likelihood evaluations that 
 
 Without belabouring the point much further, we can see that exactly the right trends are being seen as we would expect for data of this sort: MCMC  has better mixing, and better likelihoods for a given iteration; whereas FlyMC and FlyMap show worse mixing, and have lower negative log likelihoods at a given iteration, but crucially use fewer log-likelihood updates at each iteration. These are exactly the same sorts of trends that are seen in the original paper.   Having looked at the plots, the next key quantity that ought to be observed is the effective sample rate. 
 
-We can calculate a quantity that determines the effective sample rate by choosing a log-likelihod value, L, and computing the number of iterations MCMC, FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,  the effective sample rate is given by:  (FM/M)*average number of likelihood evaluations up until FM. I present our estimates of these evaluations  in the tables below. 
-The results are based using, the corresponding MCMC sampler. 
+We can calculate a quantity that determines the effective sample rate by choosing a log-likelihod value, L, and computing the number of iterations MCMC, FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,  the effective sample rate is given by:  (FM/M)*average number of likelihood evaluations up until FM. I present our estimates of these evaluations in Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding MCMC sampler. 
 
-\todo{Make up some tables about effective sample size and how the reduction
-in likelihood evaluations is bigger than the drop in ESS}
+ shows the effective sample size (ESS) of regular MCMC, untuned MCMC and MAP-tuned FlyMC for the three experiments.
+
+\begin{table}[H]
+\centering
+\caption{ESS of regular MCMC, untuned MCMC and MAP-tuned FlyMC for the three experiments}
+\label{tb:ess}
+\begin{tabular}{|l|l|l|l|}
+\hline
+                      & Regular MCMC & Untuned FlyMC & MAP-tuned FlyMC \\ \hline
+Logistic regression   & 3.6          & 0.5           & 0.6             \\ \hline
+Softmax clssification & 7.1          & 4.0           & 3.3             \\ \hline
+Robust regression     & 1.1          & 1.0           & 1.1             \\ \hline
+\end{tabular}
+\end{table}
+
+With the SSE from the table and the speedup observed from the plots of number of log-likelihood evaluations per iteration, we can conclude that MAP-tuned FlyMC provides a reasonable speedup while the untuned one is slower than the regular one.  
+
+% \todo{Make up some tables about effective sample size and how the reduction in likelihood evaluations is bigger than the drop in ESS}
+
+\todo{Reference the plots}
 
 \begin{figure}[htbp]
   \begin{subfigure}[t]{0.32\textwidth}
