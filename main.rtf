@@ -1,0 +1,239 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1265\cocoasubrtf210
+{\fonttbl\f0\fnil\fcharset0 Calibri;}
+{\colortbl;\red255\green255\blue255;\red52\green52\blue52;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\sl420\sa405
+
+\f0\fs30 \cf2 \cb3 \\addtobeamertemplate\{block end\}\{\}\{\\vspace*\{2ex\}\} % White space under blocks\
+\\addtobeamertemplate\{block alerted end\}\{\}\{\\vspace*\{2ex\}\} % White space under highlighted (alert) blocks\
+\
+\\setlength\{\\belowcaptionskip\}\{2ex\} % White space under figures\
+\\setlength\\belowdisplayshortskip\{2ex\} % White space under equations\
+\
+\\begin\{frame\}[t] % The whole poster is enclosed in one beamer frame\
+\
+\\begin\{columns\}[t] % The whole poster consists of three major columns, the second of which is split into two columns twice - the [t] option aligns each column's content to the top\
+\
+\\begin\{column\}\{\\sepwid\}\\end\{column\} % Empty spacer column\
+\
+\\begin\{column\}\{\\onecolwid\} % The first column\
+\
+%----------------------------------------------------------------------------------------\
+% OBJECTIVES\
+%----------------------------------------------------------------------------------------\
+\
+\\begin\{alertblock\}\{Executive Summary\}\
+\
+FlyMC achieves speed-ups over typical MCMC algorithms by estimating a large data-set's likelihood using smaller subsets.\
+To work, FlyMC requires a non-negative function $B_n(\\theta)$ that acts as a lower bound\
+on the likelihood, $ B_n(\\theta) \\leq L_n(\\theta) = P(x_n | \\theta)$. In addition, FlyMC:\
+\\begin\{itemize\}\
+\'a0 \\item Uses on an auxiliary variable method allowing estimation of the full dataset's likelihood\
+\'a0 \'a0 with only subsets of the data\
+\'a0 \\item May use more complex sampling and search methods, such as \\emph\{MAP tuning\} (tuning\
+\'a0 \'a0 the $B_n(\\theta)$ bound to be tight at a MAP estimate for $\\theta$),\
+\'a0 \'a0 \\emph\{implicit sampling\} (running a second MC to indirectly sample the auxiliary\
+\'a0 \'a0 variables), and strategies for selecting $B_n(\\theta)$\
+\'a0 \\item Scales to modern, web-scale, big data that\'a0 cannot fit on a single machine\
+\'a0 \\item Is applicable to a wide variety of methods, including:\
+\'a0 \'a0 logistic regression, softmax classification and robust linear regression, all of which are explored\
+\\end\{itemize\}\
+\
+\\end\{alertblock\}\
+\
+%----------------------------------------------------------------------------------------\
+% INTRODUCTION\
+%----------------------------------------------------------------------------------------\
+\
+\\begin\{block\}\{Background\}\
+\
+A central quantity of interest when performing inference is the likelihood of data $X = \\\{x_i\\\}_\{i=1\}^N$ under a parametric probability model with\
+parameters $\\theta$.\
+\\begin\{equation\}\
+\'a0 \\label\{eq:lik\}\
+\'a0 L(\\theta) = \\prod_\{i=1\}^N L_n(\\theta) = \\prod_\{i=1\}^N P(x_i | \\theta)\
+\\end\{equation\}\
+\
+For example, when performing inference using a using\'a0 Metroplis-Hastings MH-MCMC framework, these likelihoods must be computed when sampling from the posterior\
+distibution $P(\\theta | X)$. In particular, we must calculate the acceptance probability:\
+\\begin\{align\}\
+\'a0 A(\\theta'| \\theta)\
+\'a0 &= \\min \\left\\\{\
+\'a0 \'a0 \'a0 1,\
+\'a0 \'a0 \'a0 \\frac\{q(\\theta | \\theta') P(\\theta'|X)\}\{q(\\theta' | \\theta) P(\\theta | X)\}\
+\'a0 \'a0 \\right\\\}\\\\\
+\'a0 &= \\min \\left\\\{\
+\'a0 \'a0 \'a0 1,\
+\'a0 \'a0 \'a0 \\frac\{q(\\theta|\\theta') L(\\theta')P(\\theta')\}\{q(\\theta'|\\theta) L(\\theta)P(\\theta)\}\
+\'a0 \'a0 \\right\\\}\
+\\end\{align\}\
+\
+In the era of 'Big Data', $N$ may be of the order of petabytes and so computing $L(\\theta)$ at every iteration may be\
+prohibitively slow. FlyMC solves this problem by estimating $L(\\theta)$ using a smaller\'a0\
+subset of the full data-set.\
+\
+\\end\{block\}\
+\
+%----------------------------------------------------------------------------------------\
+\
+\\end\{column\} % End of the first column\
+\
+\\begin\{column\}\{\\sepwid\}\\end\{column\} % Empty spacer column\
+\
+\\begin\{column\}\{\\twocolwid\} % Begin a column which is two columns wide (column 2)\
+\
+\\begin\{columns\}[t,totalwidth=\\twocolwid] % Split up the two columns wide column\
+\
+\\begin\{column\}\{\\onecolwid\}\\vspace\{-.8in\} % The first column within column 2 (column 2.1)\
+\
+%----------------------------------------------------------------------------------------\
+% MATERIALS\
+%----------------------------------------------------------------------------------------\
+\
+\\begin\{block\}\{Theory\}\
+\
+% TODO: discuss how FlyMC is ``exact'', augmenting joint does not change marginal\
+The auxiliary variable method works by augmenting the distribution over $X$ with additional variables $Z$ to form the joint distribution $P(X,Z|\\theta) = P(Z|X,\\theta) L(\\theta)$, which we must compute likelihoods for. As we will shortly discover, the auxiliary variable $z_n$ indicates whether we will need to recompute the likelihood $L_n(\\theta)$ for the data-point $x_n$. \'a0\
+\
+\
+In FlyMC, the auxillary variables $z_i$ are Bernoulli:\
+\\begin\{equation\}\
+\'a0 \\label\{eq:brightness\}\
+\'a0 P(z_n | x_n, \\theta)\
+\'a0 = \\left(\
+\'a0 \\frac\{L_n(\\theta) - B_n(\\theta)\}\{L_n(\\theta)\}\
+\'a0 \\right)^\{z_n\} \\left(\
+\'a0 \\frac\{B_n(\\theta)\}\{L_n(\\theta)\}\
+\'a0 \\right)^\{1-z_n\}\
+\\end\{equation\}\
+where the existence of a \\textbf\{lower bound $0 < B_n(\\theta) \\leq L_n(\\theta)$ on\
+the likelihood\} is assumed. The joint distribution then has the form:\
+\\begin\{align\}\
+\'a0 \\label\{eq:complete-lik\}\
+\'a0 P(x_n,z_n|\\theta) = \\begin\{cases\}\
+\'a0 \'a0 L_n(\\theta) - B_n(\\theta) & z_n = 1\\\\\
+\'a0 \'a0 B_n(\\theta) & \\text\{otherwise\}\
+\'a0 \\end\{cases\}\
+\\end\{align\}\
+% TODO: interpret z_i as blinking fireflies\
+A key observation is that Equation ~\\ref\{eq:complete-lik\} implies we \\textbf\{need only compute $L_n(\\theta)$ for \\emph\{bright\} points $X_\{bright\}=\\\{x_n \\in\
+X : z_n = 1\\\}$\}, not for $X_\{dim\}$, when computing the joint likelihood. This gives rise to the name Firefly Monte Carlo. To see that this is the case, consider the decomposition:\'a0\
+\\begin\{align\}\
+\'a0 \\label\{eq:complete-lik-all-data\}\
+\'a0 P(X,Z|\\theta)\
+\'a0 &= \\prod_\{n=1\}^N (L_n(\\theta) - B_n(\\theta))^\{z_n\} (B_n(\\theta))^\{1 - z_n\} \\\\\
+\'a0 &= \\prod_\{x_n \\in X_\{bright\}\} (L_n(\\theta) - B_n(\\theta)) \\prod_\{x_n \\in X_\{dim\}\} B_n(\\theta)\
+\\end\{align\}\
+\
+Now, if $B_n(\\theta)$ is chosen from the exponential family or such that $\\prod_\{n \\in\
+dim\} B_n(\\theta)$ is $O(1)$,\'a0 we need only compute likelihoods for the bright points. As such an $O(\\frac\{E[\\# X_\{bright\}]\}\{N\})$ speedup will be obtained.\
+\
+%TODO: discuss how to choose B_N, tightness at MAP estimate\
+\
+\\end\{block\}\
+\
+\\begin\{block\}\{Algorithm\}\
+\
+\\begin\{enumerate\}\
+\'a0 \\item Initalize $\\theta^\{(0)\}$\
+\'a0 \\item Sample $z^\{(t)\}_n \\sim \\text\{Bernoulli\}\\left(\
+\'a0 \'a0 \\frac\{L_n(\\theta^\{(t)\}) - B_n(\\theta^\{(t)\})\}\{L_n(\\theta^\{(t)\})\}\
+\'a0 \'a0 \\right)$\
+\'a0 \\item Propose $\\theta^\{(t+1)\} \\sim q(\\theta^\{(t+1)\} | \\theta^\{(t)\})$\
+\'a0 \\item Compute $A(\\theta^\{(t+1)\} | \\theta^\{(t)\})$\
+\'a0 \'a0 with $z^\{(t)\}_n$ fixed and accept with probability $A(\\theta^\{(t+1)\} | \\theta^\{(t)\})$\
+\\end\{enumerate\}\
+\
+In \\emph\{MAP-tuned\} FlyMC, a MAP estimate $\\theta_\{MAP\}$ is first found using SGD and\
+$B_n(\\theta)$ is chosen to be tight at $\\theta_\{MAP\}$.\
+\
+\\end\{block\}\
+\
+\\end\{column\} % End of column 2.1\
+\
+\\begin\{column\}\{\\onecolwid\}\\vspace\{-.6in\} % The second column within column 2 (column 2.2)\
+\
+\\begin\{block\}\{Logistic Regression\}\
+\
+We test FlyMC's preformance for the task of classifying $7$s and $9$s on MNIST using logistic regression, with prior\
+$P(\\theta) \\sim \\mathcal\{N\}(0,I)$.\
+Figure~\\ref\{fig:evals\} shows FlyMC takes approximately 90 orders of magnitude\
+fewer likelihood evaluations than MCMC to find similarly probable posterior modes:\
+\
+\\begin\{figure\}\
+\'a0 \\centering\
+\'a0 \\hspace\{1.0cm\}\\includegraphics[width=0.8\\linewidth]\{Figures/evals_per_iter.png\}\
+\'a0 \\newline\
+\'a0 \\includegraphics[width=0.8\\linewidth]\{Figures/neg_log_posterior.png\}\
+\'a0 \\caption\{FlyMC explores similar posterior modes while requiring far fewer likelihood evaluations\}\
+\'a0 \\label\{fig:evals\}\
+\\end\{figure\}\
+\
+Figure~\\ref\{fig:traces\} shows traces for the components of $\\theta$ for two represenative runs under FlyMC and MCMC. Sampled $\\theta$s vary less under FlyMAP and FlyMC, suggesting that the mixing of coefficients is slower. Whilst, the autocorrelation plots of Fig \\ref\{fig:acf\} demonstrate that FlyMC tends to produce more dependant samples.\
+\
+\\begin\{figure\}\
+\'a0 \\begin\{center\}\
+\'a0 \'a0 \\includegraphics[width=0.5\\linewidth]\{Figures/trace_mcmc.png\}\
+\'a0 \'a0 \\includegraphics[width=0.5\\linewidth]\{Figures/trace_flymap.png\}\
+\'a0 \\end\{center\}\
+\'a0 \\caption\{Traces of $\\theta$ for MH-MCMC (l) and FlyMap (r) \}\
+\'a0 \\label\{fig:traces\}\
+\\end\{figure\}\
+\'a0\
+\\end\{block\}\
+\
+\\end\{column\} % End of column 2.2\
+\
+\\end\{columns\} % End of the split of column 2 - any content after this will now take up 2 columns width\
+\
+\\end\{column\} % End of the second column\
+\
+\\begin\{column\}\{\\sepwid\}\\end\{column\} % Empty spacer column\
+\
+\\begin\{column\}\{\\onecolwid\} % The third column\
+\
+\\begin\{figure\}\
+\'a0 \\includegraphics[width=0.7\\linewidth]\{Figures/acf_logistic.png\}\
+\'a0 \\caption\{Autocorrelation of logistic regression samples\}\
+\'a0 \\label\{fig:acf\}\
+\\end\{figure\}\
+\
+\
+\\begin\{block\}\{Softmax\}\
+\
+To demonstrate FlyMC's applicability to other machine learning problem, we\
+use FlyMC to fit a softmax classification model on three CIFAR-10\
+classes (airplane, automobile and bird) using Langevin\
+dynamics. The same general trends for logistic regression are to be found here for multi-class softmax classification, as is demonstrated by Figure~\\ref\{fig:softmax\}-.\
+\\begin\{figure\}\
+\'a0 \\includegraphics[width=0.5\\linewidth]\{Figures/log_lik_softmax.png\}\
+\'a0 \\includegraphics[width=0.5\\linewidth]\{Figures/nlp_softmax.png\}\
+\'a0 \\caption\{Softmax classification on CIFAR-10 fitted using Metropolis-adjusted Langevin dynamics\}\
+\'a0 \\label\{fig:softmax\}\
+\\end\{figure\}\
+\
+\\end\{block\}\
+\
+\
+%----------------------------------------------------------------------------------------\
+% CONCLUSION\
+%----------------------------------------------------------------------------------------\
+\
+\\begin\{block\}\{Conclusion\}\
+We found FlyMC required hundreds of times fewer likelihood evaluations per iteration than regular MCMC, but mixed more slowly. Overall, the decrease in computational cost outweighed the reduced effective sample size, resulting in speedups of $2-20$x over regular MH-MCMC. Finally, we conclude by remarking that further extensions of the FlyMC framework are possible, including:\
+\
+\\begin\{enumerate\}\
+\'a0 \\item Choosing $B_n$ such that it is a tighter lower bound and computing $\\prod_n B_n$ more efficiently\
+\'a0 \\item Directly minimising $\\# bright$ points instead of MAP-tuning\
+\'a0 \\item Parallelising likelihood computations\'a0\
+\\end\{enumerate\}\
+\
+\\end\{block\}\
+\
+\\end\{column\} % End of the third column\
+\
+\\end\{columns\} % End of all the columns in the poster\
+\
+\\end\{frame\} % End of the enclosing frame\
+}
