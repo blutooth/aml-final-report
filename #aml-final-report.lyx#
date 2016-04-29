@@ -384,6 +384,57 @@ Evaluations Per Iteration
 \end_layout
 
 \end_deeper
+\begin_layout Enumerate
+Mix IN
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Figures/trace_flymap.png
+	scale 35
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename Figures/trace_mcmc.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Evaluations Per Iteration
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+For the Cifar data, we omit to plot autocorrelation
+\end_layout
+
 \begin_layout Section*
 Conclusion 
 \end_layout

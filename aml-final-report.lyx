@@ -25,9 +25,10 @@
 \bibtex_command default
 \index_command default
 \paperfontsize default
+\spacing single
 \use_hyperref false
 \papersize default
-\use_geometry false
+\use_geometry true
 \use_package amsmath 1
 \use_package amssymb 1
 \use_package cancel 1
@@ -51,6 +52,10 @@
 \shortcut idx
 \color #008000
 \end_index
+\leftmargin 2cm
+\topmargin 1cm
+\rightmargin 2cm
+\bottommargin 2cm
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
@@ -69,7 +74,399 @@
 \begin_body
 
 \begin_layout Standard
-Introduction: -Motivations for why we should be interested in FlyMC
+Introduction:
+\end_layout
+
+\begin_layout Section
+
+\series bold
+The report should describe the rationale for selecting the paper and the
+ particular experiments for replication
+\end_layout
+
+\begin_layout Subsubsection*
+The idea:
+\end_layout
+
+\begin_layout Standard
+The key motivation for FlyMC is to achieve speed-ups over typical MCMC,
+ where we would like to sample some parameter 
+\begin_inset Formula $\theta$
+\end_inset
+
+ of interest given datapoints 
+\begin_inset Formula $x_{1:N}$
+\end_inset
+
+.
+ FlyMC does this by estimating a large data-set's likelihood using smaller
+ subsets of the data.
+ 
+\end_layout
+
+\begin_layout Standard
+To work, FlyMC requires a non-negative function 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+ that acts as a lower bound on the likelihood, 
+\begin_inset Formula $B_{n}(\theta)\leq L_{n}(\theta)=P(x_{n}|\theta)$
+\end_inset
+
+.
+ It also introduces auxiliary variables, which will act as indicators for
+ the points for which the further computation (evaluations of 
+\begin_inset Formula $L_{n}(\theta)$
+\end_inset
+
+) are required.
+ This gives the motivation for the name, FlyMC, since these auxiliary variables
+ can be thought of as lighting up when further likelihood evaluations are
+ desired.
+ Finally, with these terms in place, an intuitive explanation of FlyMc can
+ be given.
+ We have a lower bound for the likelihood, 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+, which takes care a large part of the probability mass on the distribution.
+ However, there is still a difference 
+\begin_inset Formula $L_{n}(\theta)$
+\end_inset
+
+-
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+, which we are uncertain of and which we would like to compute adjustments
+ for by sampling.
+ FlyMCn constructs a way of sampling from this residual probability mass,
+ which is hopefully much smaller than 
+\begin_inset Formula $L_{n}$
+\end_inset
+
+(
+\begin_inset Formula $\theta)$
+\end_inset
+
+, and so may result in large reductions in sampling time.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+(Todo Insert Graph)
+\end_layout
+
+\begin_layout Subsubsection*
+Rationale for selecting the paper: 
+\end_layout
+
+\begin_layout Standard
+We chose FlyMC because of the ubiquity of MCMC sampling methods which see
+ use not just in the fields of machine learning and Bayesian statistics,
+ but also in the fields of computational physics, biology and computational
+ linguistics.
+ 
+\series bold
+Interesting examples.
+ 
+\series default
+If large speed-ups could be obtained using the methods expounded in FlyMC,
+ this would be of great benefit to many different academic communities.
+\end_layout
+
+\begin_layout Standard
+Furthermore, in Bayesian statistics, the recent development of MCMC methods
+ has been a key step in making it possible to compute large hierarchical
+ models that require integrations over hundreds or even thousands of unknown
+ parameters.
+ However, to make MCMC work quickly for data of the order of that seen in
+ the 'Big Data' era, any speed-up that is possible would be well received.
+ 
+\end_layout
+
+\begin_layout Standard
+In addition to this, FlyMC is based on a mathematically elegant idea.
+ The idea is that when performing inference, all that is necessary is to
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+The Experiments to be replicated: 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+It should summarise aspects of the paper relevant to the experiment (both
+ to set the experiment in context and to lay out relevant technical details)
+\series default
+.
+ 
+\end_layout
+
+\begin_layout Standard
+In this practical, we conducted the following three experiments:
+\end_layout
+
+\begin_layout Itemize
+Logistic regression: For this particular task, we tested we tested FlyMC's
+ preformance for the task of classifying 7s and 9s on MNIST, with prior
+ 
+\begin_inset Formula $P(\theta)\sim\mathcal{N}(0,I)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+Softmax classification: For this task, we tested FlyMC's ability to fit
+ a softmax classification model on three CIFAR-10 classes (airplane, automobile
+ and bird) using Langevin dynamics 
+\end_layout
+
+\begin_layout Itemize
+Robust linear regression: For logistic regression task, we generated synthetic
+ data and evaluated the performance of FlyMC in comparison to regular MCMC.
+ 
+\end_layout
+
+\begin_layout Standard
+The first two of these three experiments were data-sets used in the paper.
+ However, for the third data-set we decided it would be intersting to see
+ if the same results claimed by a paper could be found in a data-set that
+ was not hand-picked by the authors.
+ 
+\end_layout
+
+\begin_layout Section*
+Main Body 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+The report should detail the experimental simulations you ran, compare them
+ to those in the original paper, and draw conclusions.
+
+\series default
+ 
+\end_layout
+
+\begin_layout Section*
+Results: 
+\end_layout
+
+\begin_layout Enumerate
+Autocorrelation Logistic Regression
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Figures/acf_logistic.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Autocorrelation Logistic Regression
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Evaluations per iteration: 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Figures/evals_per_iter.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Evaluations Per Iteration
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Log Posterior
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Figures/neg_log_posterior.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Evaluations Per Iteration
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Mix IN
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Figures/trace_flymap.png
+	scale 35
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename Figures/trace_mcmc.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Evaluations Per Iteration
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Section*
+Conclusion 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+You should end by critically evaluating your work and suggest what you would
+ have done given more time.
+\end_layout
+
+\begin_layout Standard
+FlyMC achieves speed-ups over typical MCMC algorithms by estimating a large
+ data-set's likelihood using smaller subsets.
+ To work, FlyMC requires a non-negative function 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+ that acts as a lower bound on the likelihood, $ B_n(
+\backslash
+theta) 
+\backslash
+leq L_n(
+\backslash
+theta) = P(x_n | 
+\backslash
+theta)$.
+ In addition, FlyMC:
+\end_layout
+
+\begin_layout Standard
+-Motivations for why we should be interested in FlyMC
+\end_layout
+
+\begin_layout Standard
+We 
 \end_layout
 
 \begin_layout Standard
