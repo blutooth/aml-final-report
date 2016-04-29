@@ -1,0 +1,999 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Theory
+\end_layout
+
+\begin_layout Standard
+Given independent and identically distributed observations 
+\begin_inset Formula $X=\{x_{n}\}_{n=1}^{N}$
+\end_inset
+
+, one is often interested in the 
+\emph on
+likelihood
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For example, when performing Metropolis-Hastings MCMC to sample a posterior
+ distribution 
+\begin_inset Formula $P(\theta|X)\propto P(X|\theta)P(\theta)$
+\end_inset
+
+one needs to compute the acceptance probability
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{multline*}
+A(\theta'|\theta)=\min\left\{ 1,\frac{q(\theta|\theta')L(\theta')P(\theta')}{q(\theta'|\theta)L(\theta)P(\theta)}\right\} 
+\end{multline*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This means that each iteration requires at least one (
+\begin_inset Formula $L(\theta)$
+\end_inset
+
+ can be cached from the prior iteration) evaluation of the likelihood over
+ all 
+\begin_inset Formula $N$
+\end_inset
+
+ points.
+ Unfortunately, in the era of 
+\begin_inset Quotes eld
+\end_inset
+
+Big Data
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset Formula $N$
+\end_inset
+
+ may be on the order of petabytes and computing 
+\begin_inset Formula $L(\theta)$
+\end_inset
+
+ at each iteration may be prohibitively expensive.
+\end_layout
+
+\begin_layout Standard
+Firefly Monte Carly (FlyMC) is a method which addressses the computational
+ problem of evaluating 
+\begin_inset Formula $L(\theta)$
+\end_inset
+
+ for a large number of data points 
+\begin_inset Formula $N$
+\end_inset
+
+ through exact Monte Carlo estimates of the of the full dataset likelihood
+ using smaller, tractable subsets.
+ As an auxilliary variable method, it works by augmenting the joint distribution
+ with hidden
+\emph on
+ brightness 
+\emph default
+variables
+\begin_inset Formula $Z=\{z_{n}\in\left\{ 0,1\right\} \}_{n=1}^{N}$
+\end_inset
+
+to form a 
+\emph on
+complete data likelihood
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+P(X,Z|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Notice that we can recover the desired likelihoods simply through marginalizatio
+n
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sum_{Z}P(X,Z|\theta)=\sum_{z_{1}}\dots\sum_{z_{N}}\prod_{n=1}^{N}P(|x_{n}|\theta)P(z_{n}|x_{n},\theta)=\prod_{n=1}^{N}P(|x_{n}|\theta)\sum_{z_{n}}P(z_{n}|x_{n},\theta)=L(\theta)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In FlyMC, the brightness variables are chosen to have Bernoulli distribution
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+P(z_{n}|x_{n},\theta)=\left(\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right)^{z_{n}}\left(\frac{B_{n}(\theta)}{L_{n}(\theta)}\right)^{1-z_{n}}\label{eq:brightness}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+ is a lower bound on the likelihood satisfying
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align}
+ & 0\leq B_{n}(\theta)\leq L_{n}(\theta)\label{eq:bn-bound}\\
+ & \prod_{n\in A}B_{n}(\theta)\text{ can be efficiently computed for any data subset }A\subset X\label{eq:bn-efficient}
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $0\leq B_{n}(\theta)\leq L_{n}(\theta)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\prod_{n=1}^{N}B_{n}(\theta)$
+\end_inset
+
+ can be efficiently computed
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bn-bound"
+
+\end_inset
+
+is required for 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:brightness"
+
+\end_inset
+
+ to be a valid probability distribution.
+ To see why 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bn-efficient"
+
+\end_inset
+
+ is necessary, consider computing the complete data likelihood
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align}
+P(X,Z|\theta) & =\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)\nonumber \\
+ & =\prod_{n=1}^{N}L_{n}(\theta)\left(\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right)^{z_{n}}\left(\frac{B_{n}(\theta)}{L_{n}(\theta)}\right)^{1-z_{n}}\nonumber \\
+ & =\prod_{x_{n}\in X_{bright}}\left(L_{n}(\theta)-B_{n}(\theta)\right)\prod_{x_{n}\in X_{dim}}\left(B_{n}(\theta)\right)\label{eq:bright-dim-decomposition}\\
+ & =\prod_{n=1}^{N}B_{n}(\theta)\prod_{x_{n}\in X_{bright}}\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where the bright points 
+\begin_inset Formula $X_{bright}=\{x_{n}:z_{n}=1\}$
+\end_inset
+
+ and dim points 
+\begin_inset Formula $X_{dim}=\{x_{n}:z_{n}=0\}$
+\end_inset
+
+give rise to the 
+\begin_inset Quotes eld
+\end_inset
+
+Firefly
+\begin_inset Quotes erd
+\end_inset
+
+ in the paper title.
+ Notice that as a consequence of our choice for
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:brightness"
+
+\end_inset
+
+,
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bright-dim-decomposition"
+
+\end_inset
+
+ decomposes into two products where 
+\begin_inset Formula $\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}$
+\end_inset
+
+ only needs to be evaluated for 
+\begin_inset Formula $x_{n}\in X_{bright}$
+\end_inset
+
+.
+ By assuming 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bn-efficient"
+
+\end_inset
+
+, the other term 
+\begin_inset Formula $\prod_{n=1}^{N}B_{n}(\theta)$
+\end_inset
+
+ can be efficiently computed so the computational complexity is determined
+ by 
+\begin_inset Formula $X_{bright}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Performance comparison
+\end_layout
+
+\begin_layout Standard
+Instead of evaluating 
+\begin_inset Formula $L_{n}(\theta)$
+\end_inset
+
+ over all 
+\begin_inset Formula $N$
+\end_inset
+
+ points, FlyMC only evaluates the likelihood over a subset of points 
+\begin_inset Formula $X_{bright}$
+\end_inset
+
+.
+ This provides a speedup of 
+\begin_inset Formula $\frac{N}{\#X_{bright}}$
+\end_inset
+
+per iteration.
+ However, since the brightness variables 
+\begin_inset Formula $z_{n}$
+\end_inset
+
+are themselves, to understand the performance improvements we consider the
+ expected number of bright points 
+\begin_inset Formula $E[\#X_{bright}]$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Note that for any point 
+\begin_inset Formula $x_{n}$
+\end_inset
+
+,
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:brightness"
+
+\end_inset
+
+ implies the probability 
+\begin_inset Formula $x_{n}$
+\end_inset
+
+is bright is given by 
+\begin_inset Formula $\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$
+\end_inset
+
+.
+ Hence, the number of bright points is given by
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+E[\#X_{bright}]=\sum_{n=1}^{N}E[z_{n}]=\sum_{n=1}^{N}\int P(\theta|X)\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}d\theta\label{eq:num-bright}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This says that the number of bright points (and hence the speedup achieved
+ by FlyMC) is related to the gap between the true likelihood 
+\begin_inset Formula $L_{n}(\theta)$
+\end_inset
+
+ and the lower bound 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+, weighted by the posterior 
+\begin_inset Formula $P(\theta|X)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+This result makes intuitive sense.
+ Consider the extreme case where for all 
+\begin_inset Formula $n$
+\end_inset
+
+: 
+\begin_inset Formula $B_{n}(\theta)=0$
+\end_inset
+
+.
+ Then 
+\begin_inset Formula $P(z_{n}=1|x_{n},\theta)=1$
+\end_inset
+
+ so every data point is bright (i.e.
+ 
+\begin_inset Formula $X=X_{bright}$
+\end_inset
+
+) and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bright-dim-decomposition"
+
+\end_inset
+
+ reduces to evaluating the full dataset likelihood 
+\begin_inset Formula $\prod_{n=1}^{N}L_{n}(\theta)$
+\end_inset
+
+ as usual.
+\end_layout
+
+\begin_layout Standard
+In the other extreme, if 
+\begin_inset Formula $B_{n}(\theta)=L_{n}(\theta)$
+\end_inset
+
+ so all data points are dim.
+ At first it appears that FlyMC counterintuitively offers a 
+\begin_inset Formula $\frac{N}{\#X_{bright}}=\frac{N}{0}=\infty$
+\end_inset
+
+speedup.
+ However, considering 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bright-dim-decomposition"
+
+\end_inset
+
+ reveals that what is computed is 
+\begin_inset Formula $\prod_{n=1}^{N}B_{n}(\theta)=\prod_{n=1}^{N}L_{n}(\theta)$
+\end_inset
+
+, which by assumption 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bn-efficient"
+
+\end_inset
+
+can be computed efficiently.
+ But then computing 
+\begin_inset Formula $L(\theta)=\prod_{n=1}^{N}L_{n}(\theta)$
+\end_inset
+
+ is efficient and hence is no longer 
+\begin_inset Formula $O(N)$
+\end_inset
+
+, contradicting our earlier assumptions.
+\end_layout
+
+\begin_layout Subsection
+Discussion on the lower bound 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The integral role played by the lower bound 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+ makes it an important topic of investigation.
+ In this section, we investigate how reasonable and justified are the assumption
+s required for developing FlyMC's theory.
+\end_layout
+
+\begin_layout Standard
+One of our assumptions (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bn-efficient"
+
+\end_inset
+
+) was that computation of 
+\begin_inset Formula $\prod_{n=1}^{N}B_{n}(\theta)$
+\end_inset
+
+ be efficient new 
+\begin_inset Formula $\theta$
+\end_inset
+
+.
+ For example, choosing 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+ to be exponential family will make computing 
+\begin_inset Formula $\prod_{n=1}^{N}B_{n}(\theta)$
+\end_inset
+
+ for each new 
+\begin_inset Formula $\theta$
+\end_inset
+
+ be 
+\begin_inset Formula $O(1)$
+\end_inset
+
+ because
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+B_{n}(\theta) & \propto\exp(\langle\eta_{n},T(\theta)\rangle)\\
+\prod_{n=1}^{N} & B_{n}(\theta)\propto\exp(\langle\sum_{n=1}^{N}\eta_{n},T(\theta)\rangle)
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and 
+\begin_inset Formula $\sum_{n=1}^{N}\eta_{n}$
+\end_inset
+
+ can be evaluated once and cached.
+ We believe that this assumption is quite restrictive and have had some
+ difficulty coming up with functional forms which are not exponential family
+ that satisfy this assumption.
+\end_layout
+
+\begin_layout Standard
+The other assumption (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bn-bound"
+
+\end_inset
+
+) required 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+ be a non-negative lower bound for 
+\begin_inset Formula $L_{n}(\theta)$
+\end_inset
+
+.
+ This is trivially satisfied by setting 
+\begin_inset Formula $B_{n}(\theta)=0$
+\end_inset
+
+, but to be practical we should try to find a lower bound with the smallest
+ gap possible.
+ Several forms of bounds exist for commonly used likelihoods; the original
+ authors consider the Jaakola and Jordan bound on the log logistic function.
+ However, this requirement is quite restrictive and unrealistic for more
+ complex use cases.
+ For example, if 
+\begin_inset Formula $L_{n}(\theta)$
+\end_inset
+
+ is given by some complicated Bayes net or neural network, then a valid
+ 
+\begin_inset Formula $B_{n}(\theta)$
+\end_inset
+
+ for use with FlyMC is not immediately obvious.
+\end_layout
+
+\begin_layout Subsubsection
+MAP-tuning the lower bound
+\end_layout
+
+\begin_layout Standard
+In certain cases (e.g.
+ Jaakola and Jordan bound on log logistic), 
+\begin_inset Formula $B_{n}$
+\end_inset
+
+ is part of a parametric family of lower bounds 
+\series bold
+
+\begin_inset Formula $\left\{ B_{n}(\cdot,\xi)\right\} _{\xi}$
+\end_inset
+
+
+\series default
+where 
+\begin_inset Formula $\xi$
+\end_inset
+
+ is a free parameter.
+ Since the number of bright points determines the speedup offered by FlyMC,
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:num-bright"
+
+\end_inset
+
+ suggests that we should choose 
+\begin_inset Formula $\xi$
+\end_inset
+
+ to minimize 
+\begin_inset Formula $E\left[\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right]$
+\end_inset
+
+ for each datapoint 
+\begin_inset Formula $n$
+\end_inset
+
+ where the expectation is taken over the posterior distribution 
+\begin_inset Formula $P(\theta|X)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The authors of FlyMC propose a 
+\emph on
+MAP-tuned FlyMC
+\emph default
+ variant where the posterior expectation 
+\begin_inset Formula $E\left[\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right]$
+\end_inset
+
+ is replaced with the MAP point estimate 
+\begin_inset Formula $\frac{L_{n}(\theta_{MAP})-B_{n}(\theta_{MAP})}{L_{n}(\theta_{MAP})}$
+\end_inset
+
+ and
+\begin_inset Formula $\xi=\text{argmin}_{\xi}L_{n}(\theta_{MAP})-B_{n}(\theta_{MAP})$
+\end_inset
+
+.
+\begin_inset Formula $\theta_{MAP}=\text{\text{argmax}}_{\theta}P(\theta|X)$
+\end_inset
+
+ can be found using stochastic gradient descent to handle large data-set
+ concerns.
+\end_layout
+
+\begin_layout Standard
+Our opinions about this method are mixed.
+ While MAP tuning should provide a tighter lower bound than no tuning, approxima
+ting the posterior with a delta distribution centered at 
+\begin_inset Formula $\theta_{MAP}$
+\end_inset
+
+seems suspicious.
+ Other methods which could be considered here include first generating some
+ posterior samples using an untuned chain or MCMC on a subset of the data,
+ then tuning 
+\begin_inset Formula $\xi$
+\end_inset
+
+over the posterior samples.
+\end_layout
+
+\begin_layout Section
+Implementation
+\end_layout
+
+\begin_layout Standard
+FlyMC augments traditional MCMC by introducing brightness variables 
+\begin_inset Formula $Z$
+\end_inset
+
+ which are Gibbs sampled along with the original chain's state 
+\begin_inset Formula $\theta$
+\end_inset
+
+.
+ At a high level, the algorithm consists of the following steps:
+\end_layout
+
+\begin_layout Enumerate
+Initialize 
+\begin_inset Formula $\theta^{(0)}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+For 
+\begin_inset Formula $t=1,\cdots,N_{iter}$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+For 
+\begin_inset Formula $n=1,\cdots,N$
+\end_inset
+
+: sample 
+\begin_inset Formula $z_{n}^{(t)}\sim\text{Bernoulli}\left(\frac{L_{n}(\theta^{(t)})-B_{n}(\theta^{(t)})}{L_{n}(\theta^{(t)})}\right)$
+\end_inset
+
+ with 
+\begin_inset Formula $\theta=\theta^{(t)}$
+\end_inset
+
+fixed
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Propose 
+\begin_inset Formula $\theta^{(t+1)}\sim q(\theta^{(t+1)}|\theta^{(t)})$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Compute acceptance probability 
+\begin_inset Formula $A(\theta^{(t+1)}|\theta^{(t)})=\min\left\{ 1,\frac{q(\theta^{(t)}|\theta^{(t+1)})P(X,Z|\theta^{(t+1)})P(\theta^{(t+1)})}{q(\theta^{(t+1)}|\theta^{(t)})P(X,Z|\theta^{(t)})P(\theta^{(t)})}\right\} $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Repeat from step 2 until chain has mixed, yielding a single sample 
+\begin_inset Formula $z_{n}^{(\infty)}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In step 4, the complete data likelihood is computed using 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bright-dim-decomposition"
+
+\end_inset
+
+ and hence only requires evaluating the likelihood over 
+\begin_inset Formula $X_{bright}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+One possible criticism of the method described above is that step 2(a) requires
+ sampling 
+\begin_inset Formula $z_{n}$
+\end_inset
+
+from 
+\begin_inset Formula $N$
+\end_inset
+
+ Bernoulli distributions each with probability 
+\begin_inset Formula $\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$
+\end_inset
+
+ and hence direct sampling will again require 
+\begin_inset Formula $N$
+\end_inset
+
+ evaluations of 
+\begin_inset Formula $L_{n}(\theta)$
+\end_inset
+
+.
+ Fortunately, this can be avoided through 
+\emph on
+implicit sampling
+\emph default
+, where a second MH-MCMC is used to sample the 
+\begin_inset Formula $z_{i}$
+\end_inset
+
+.
+ The motivation is that ideally many 
+\begin_inset Formula $z_{i}=0$
+\end_inset
+
+ so it makes sense to only consider proposals where each dim point has a
+ small 
+\begin_inset Formula $q_{d\to b}\in[0,1]$
+\end_inset
+
+ probability of becoming bright.
+ Then, evaluating the acceptance probability only requires computing 
+\begin_inset Formula $L_{n}(\theta)$
+\end_inset
+
+ at the 
+\begin_inset Formula $z_{n}$
+\end_inset
+
+which have been proposed to change state.
+\end_layout
+
+\begin_layout Subsection
+Provided reference software
+\end_layout
+
+\begin_layout Standard
+Reference code is provided by the authors
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+https://github.com/HIPS/firefly-monte-carlo
+\end_layout
+
+\end_inset
+
+, which provides implementations FlyMC for logistic regression using MH-MCMC,
+ softmax using Langevin dynamics, and sparse linear regression using slice
+ sampling.
+ The reference implementation includes an implicit sampling scheme for sampling
+ brightness variables 
+\begin_inset Formula $z_{i}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Our contributions to the project
+\end_layout
+
+\begin_layout Standard
+However, the only full example provided is a logistic regression example
+ on toy data and is insufficient for reproducing the results reported in
+ the paper.
+ We forked
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+https://github.com/feynmanliang/firefly-monte-carlo
+\end_layout
+
+\end_inset
+
+ the authors' code and added our own modifications, most importantly:
+\end_layout
+
+\begin_layout Enumerate
+Support for MAP-tuning of the lower bounds, using 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+scipy.optimize
+\end_layout
+
+\end_inset
+
+ for MAP estimation
+\end_layout
+
+\begin_layout Enumerate
+Implementation of regular full-dataset MCMC, which is achieved by fixing
+ 
+\begin_inset Formula $\forall i:z_{i}=1$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Instrumentation for counting log-likelihood evaluations and outputting traces
+ of chain state and log likelihood per iteration
+\end_layout
+
+\begin_layout Enumerate
+Integration, parameter tuning, and reproduction of MNIST Logistic Regression,
+ CIFAR-10 Softmax Classification, and Robust Linear Regression experimental
+ results
+\end_layout
+
+\begin_layout Standard
+We also fixed a significant bug in some caching code provided with the reference
+ implementation and submitted a pull-request upstream
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+https://github.com/HIPS/firefly-monte-carlo/pull/1
+\end_layout
+
+\end_inset
+
+.
+ The problem was that computations of 
+\begin_inset Formula $\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $
+\end_inset
+
+were being cached for vectors 
+\begin_inset Formula $\theta$
+\end_inset
+
+ and 
+\begin_inset Formula $idx$
+\end_inset
+
+, but that caching was performed over the entire 
+\begin_inset Formula $idx$
+\end_inset
+
+ vector rather than elementwise.
+ For example, if 
+\begin_inset Formula $idx2\subsetneq idx$
+\end_inset
+
+, then even though 
+\begin_inset Formula $\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx2\right\} \subset\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $
+\end_inset
+
+ the reference implementation would still result in a cache miss because
+ 
+\begin_inset Formula $idx2\neq idx$
+\end_inset
+
+.
+ This bug causes the number of likelihood evaluations to be twice the number
+ of proposed bright points 
+\begin_inset Formula $\#X_{bright}$
+\end_inset
+
+at each iteration, which means that FlyMC will only offer speedups if 
+\begin_inset Formula $\#X_{bright}<\frac{N}{2}$
+\end_inset
+
+.
+\end_layout
+
+\end_body
+\end_document
