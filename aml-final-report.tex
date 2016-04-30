@@ -82,7 +82,7 @@ would be well received.
 
 In addition to this, FlyMC is based on a mathematically elegant idea.
 The idea is that when performing inference, all that is necessary
-is to
+is to \todo{finish this sentence}
 
 \section{Theory}
 
@@ -378,19 +378,57 @@ data-set that was not hand-picked by the authors.
 
 \subsubsection*{Results}
 
-The plots of autocorrelation from the three data-sets display the same  general trends. The autocorrelation curve for MCMC is below that of FlyMC and FlyMap. These results tend to show that FlyMC variant tends to produce samples $\theta$ that have have a greater dependence between themselves. This is unsurprising given that there are fewer likelihood evaluations at each step of FlyMC, which means that there are fewer updates to the posterior of $ p(\theta\ | \theta ) $.
+The plots of autocorrelation from the three data-sets display the same  general
+trends. The autocorrelation curve for MCMC is below that of FlyMC and FlyMap.
+These results tend to show that FlyMC variant tends to produce samples $\theta$
+that have have a greater dependence between themselves. This is unsurprising
+given that there are fewer likelihood evaluations at each step of FlyMC, which
+means that there are fewer updates to the posterior of $ p(\theta\ | \theta ) $.
 
-A further trend that can be noticed is that, at least initially, the negative log posterior for MCMC tends to be greater than either two of the FlyMC variants. This is unsurprising, because at any given iteration, MCMC , will have computed a great deal more likelihood updates for many more points, and so the posterior probabilities of the sampled parameter theta under MCMC, will have had more of an opportunity to adapt to the data-set given  than the Fly variants (at any given iteration).
+A further trend that can be noticed is that, at least initially, the negative
+log posterior for MCMC tends to be greater than either two of the FlyMC
+variants. This is unsurprising, because at any given iteration, MCMC , will have
+computed a great deal more likelihood updates for many more points, and so the
+posterior probabilities of the sampled parameter theta under MCMC, will have had
+more of an opportunity to adapt to the data-set given  than the Fly variants (at
+any given iteration).
 
-For both soft-max classification and  logistic regression, the number of log-likelihood evaluations at each step remains constant. This is to be expected, since likelihood updates are computed for all the data-points. However, because the parameters for the regression data are sampled using slice-sampling (which essentially involves an adaptive step size) the number of likelihood evaluation  tends to oscillate up and down depending on the weight of the step size.
+For both soft-max classification and  logistic regression, the number of
+log-likelihood evaluations at each step remains constant. This is to be
+expected, since likelihood updates are computed for all the data-points.
+However, because the parameters for the regression data are sampled using
+slice-sampling (which essentially involves an adaptive step size) the number of
+likelihood evaluation  tends to oscillate up and down depending on the weight of
+the step size.
 
-That not withstanding, in all cases FLyMC computes  likelihood evaluations that are an order of magnitude smaller than MCMC. For MNIST logistic regression, approximately 1/12 of the likelihoods    are computed at each stage.  For softmax classification, FlyMC evaluated roughly 1/3  of the likelihoods that regular MCMC evaluated and FlyMap performed even better  evaluating  only 1/6 of the likelihoods that regular MCMC evaluated at each step.
+That not withstanding, in all cases FlyMC computes  likelihood evaluations that
+are an order of magnitude smaller than MCMC. For MNIST logistic regression,
+approximately 1/12 of the likelihoods    are computed at each stage.  For
+softmax classification, FlyMC evaluated roughly 1/3  of the likelihoods that
+regular MCMC evaluated and FlyMap performed even better  evaluating  only 1/6 of
+the likelihoods that regular MCMC evaluated at each step.
 
-Without belabouring the point much further, we can see that exactly the right trends are being seen as we would expect for data of this sort: MCMC  has better mixing, and better likelihoods for a given iteration; whereas FlyMC and FlyMap show worse mixing, and have lower negative log likelihoods at a given iteration, but crucially use fewer log-likelihood updates at each iteration. These are exactly the same sorts of trends that are seen in the original paper.   Having looked at the plots, the next key quantity that ought to be observed is the effective sample rate.
+Without belabouring the point much further, we can see that exactly the right
+trends are being seen as we would expect for data of this sort: MCMC  has better
+mixing, and better likelihoods for a given iteration; whereas FlyMC and FlyMap
+show worse mixing, and have lower negative log likelihoods at a given iteration,
+but crucially use fewer log-likelihood updates at each iteration. These are
+exactly the same sorts of trends that are seen in the original paper.   Having
+looked at the plots, the next key quantity that ought to be observed is the
+effective sample rate.
 
-We can calculate a quantity that determines the effective sample rate by choosing a log-likelihod value, L, and computing the number of iterations MCMC, FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,  the effective sample rate is given by:  (FM/M)*average number of likelihood evaluations up until FM. I present our estimates of these evaluations in Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding MCMC sampler.
+We can calculate a quantity that determines the effective sample rate by
+choosing a log-likelihod value, L, and computing the number of iterations MCMC,
+FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were
+M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,
+the effective sample rate is given by:  (FM/M)*average number of likelihood
+evaluations up until FM. I present our estimates of these evaluations in
+Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding
+MCMC sampler.
 
- shows the effective sample size (ESS) of regular MCMC, untuned MCMC and MAP-tuned FlyMC for the three experiments.
+\todo{Finish sentence}
+ shows the effective sample size (ESS) of regular MCMC, untuned MCMC and
+ MAP-tuned FlyMC for the three experiments.
 
 \begin{table}[H]
 \centering
