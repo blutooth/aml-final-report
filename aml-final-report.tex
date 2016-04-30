@@ -381,16 +381,70 @@ data where the true model is known.
 
 \subsection{Results of the three methods}
 
-In this section we will need to discover whether the reductions in likelihood evaluations per iteration that had been
-obtained in FlyMC would dominate the increased burn-in period that is required when sampling using fire-fly Monte Carlo.
+In this section we will need to discover whether the reductions in likelihood
+evaluations per iteration that had been obtained in FlyMC would dominate the
+increased burn-in period that is required when sampling using Firefly Monte
+Carlo.
 
-From figure (c), we can see that the number of log-likelihood evaluations at a given iteration
-is constant under the MH-MCMC sampler for Logistic regression on MNIST. Approximately, 12,000 evaluations are
-computed at each iteration. For soft-max classification, figure (c) , this number of evaluations is also constant at 3000.
-In contrast, far fewer likelihood evaluations are required under both the flyMC and flyMap models/ In figure (c) we can see that
-both flymap and flymc compute less than a 12th of the likelihood computations evaluated by the MCMC sampler.
-The trend is less marked for both soft-max classification and robust regression as can be seen in the respective figures (c), where
-FlyMC and FlyMAP seem to return more modest reductions of aroud  1/3 and 1/6 of the likelihoods respectively.
+\begin{figure}[h!]
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/logi_corr.png}
+    \caption{Autocorrelation}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/logi_lik.png}
+    \caption{Negative log posterior}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/logi_numlik.png}
+    \caption{Number likelihood evaluations}
+  \end{subfigure}
+  \caption{Logistic regression binary classification on MNIST with MH-MCMC}
+  \label{fig:logistic}
+\end{figure}
+\begin{figure}[h!]
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/soft_corr.png}
+    \caption{Autocorrelation}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/soft_lik.png}
+    \caption{Negative log posterior}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/soft_numlik.png}
+    \caption{Number likelihood evaluations}
+  \end{subfigure}
+  \caption{Softmax 3-way classification on CIFAR-10 with Langevin dynamics}
+  \label{fig:soft}
+\end{figure}
+\begin{figure}[h!]
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/reg_corr.png}
+    \caption{Autocorrelation}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/reg_lik.png}
+    \caption{Negative log posterior}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[scale=0.35]{Figures/final/reg_numlik.png}
+    \caption{Number likelihood evaluations}
+  \end{subfigure}
+  \caption{Robust regression on synthesized data with slice sampler}
+  \label{fig:regression}
+\end{figure}
+
+From figure (c), we can see that the number of log-likelihood
+evaluations at a given iteration is constant under the MH-MCMC sampler for
+Logistic regression on MNIST. Approximately, 12,000 evaluations are computed at
+each iteration. For soft-max classification, figure (c) , this number of
+evaluations is also constant at 3000. In contrast, far fewer likelihood
+evaluations are required under both the flyMC and flyMap models/ In figure (c)
+we can see that both flymap and flymc compute less than a 12th of the likelihood
+computations evaluated by the MCMC sampler. The trend is less marked for both
+soft-max classification and robust regression as can be seen in the respective
+figures (c), where FlyMC and FlyMAP seem to return more modest reductions of aroud  1/3 and 1/6 of the likelihoods respectively.
 
 If we had reached the stationary distibution of a markov Chain, this would represent a significant reduction in the
 likelihoods that one would need to compute. However, to an extent flymap's benefits from reduced likelihood computations
@@ -412,33 +466,24 @@ to be more dependent, however they do little to arbitrate int he dispute of what
 fewer likelihood evaluations per iteration or greater burn-in periods. So far, it seems as though the likelihood reductions
 are the dominant term in these computations.
 
-To summarise, exactly same sorts of trends were found in our generated tests as were found in the paper by Ryan Adams.\footnote{https://github.com/HIPS/firefly-monte-carlo%}.
+To summarise, exactly same sorts of trends were found in our generated tests as were found in the paper by Ryan Adams \cite{maclaurin2014firefly}
 MCMC has better mixing ( as demonstrated through autocorrelation), and better likelihoods at a given iteration.
 Though FlyMC and FlyMap show worse mixing, and have lower negative log likelihoods at
 a given iteration, crucially they use fewer log-likelihood updates at each iteration and are found to be very competitive samplers.
- 
-Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding
-\subsection{Reproducing Table 1 from \ref{maclaurin2014firefly}}
 
-\todo{Less exposition about ESS, more about trading off burn in for less evaluations
-and how to measure the effect of burn in}
+\subsection{Quantifying mixing rates and assessing relative speedup}
 
-Crucially, however, the effectiveness of MC interpolation depends
-on the effective sample size for a given number of iterations. If FlyMc is to
-deliver the improvements in 1000 iteration.
+Our results have shown that FlyMC decreases the number of likelihood
+evaluations required, but also leads to more correlated samples and hence
+slower mixing times. To determine whether FlyMC offers any speedup, it is
+necessary to quantify the slowdown in mixing due to using data subsets.
 
-We can calculate a quantity that determines the effective sample rate by
-choosing a log-likelihod value, L, and computing the number of iterations MCMC,
-FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were
-M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,
-the effective sample rate is given by:  (FM/M)*average number of likelihood
-evaluations up until FM. I present our estimates of these evaluations in
-\autoref{tab:reproduce}. The results are based using, the corresponding
-MCMC sampler.
+Following \cite{cowles1996markov}, one method for measuring mixing rates is
+effective sample size. \autoref{tab:reproduce} reproduces Table 1 from
+\cite{maclaurin2014firefly}, comparing the average likelihood queries per iteration
+and the effective sample size (ESS) per 1000 iterations to determine relative
+speedups.
 
-Following \cite{cowles1996markov}, we can quantify slower burn-in
-\autoref{tab:reproduce} shows the effective sample size (ESS) per 1000 iterations of
-regular MCMC, untuned MCMC and MAP-tuned FlyMC for the three experiments.
 \begin{table}[H]
   \centering
   \caption{Reproduction of the experiments reported in \cite{maclaurin2014firefly}. We did not
@@ -466,64 +511,14 @@ regular MCMC, untuned MCMC and MAP-tuned FlyMC for the three experiments.
     \bottomrule
   \end{tabular}
 \end{table}
-Our results in \autoref{tab:reproduce} show that MAP-tuned FlyMC performs well
+
+Our results show that MAP-tuned FlyMC performs well
 and achieves rougly an order of magnitude relative speedup in all cases.
 Untuned FlyMC, however, can be as much as $5\times$ slower. As evidenced by
 the increased number of likelihood queries, this slowdown is caused by increased
 likelihood evaluations while attaining the same ESS. We suspect the underlying cause
 is due to the larger gap in the untuned lower bound, which following
 \autoref{eq:num-bright} leads to more bright points.
-
-\begin{figure}[htbp]
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/logi_corr.png}
-    \caption{Autocorrelation}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/logi_lik.png}
-    \caption{Negative log posterior}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/logi_numlik.png}
-    \caption{Number likelihood evaluations}
-  \end{subfigure}
-  \caption{Logistic regression binary classification on MNIST with MH-MCMC}
-\end{figure}
-
-\begin{figure}[htbp]
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/soft_corr.png}
-    \caption{Autocorrelation}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/soft_lik.png}
-    \caption{Negative log posterior}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/soft_numlik.png}
-    \caption{Number likelihood evaluations}
-  \end{subfigure}
-  \caption{Softmax 3-way classification on CIFAR-10 with Langevin dynamics}
-\end{figure}
-
-\begin{figure}[htbp]
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/reg_corr.png}
-    \caption{Autocorrelation}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/reg_lik.png}
-    \caption{Negative log posterior}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[scale=0.35]{Figures/final/reg_numlik.png}
-    \caption{Number likelihood evaluations}
-  \end{subfigure}
-  \caption{Robust regression on synthesized data with slice sampler}
-\end{figure}
-
-
-
 
 \section{Conclusion}
 
@@ -560,7 +555,7 @@ Through completing this practical, we have made a number of contributions
 Systems Group's code repository which address sevaral important bugs and
 optimizations. In particular, we optimize the likelihood caches to work
 elementwise, fix overflow prevention in various areas of the code,
-and provide integration for MAP-tuning using \texstttt{scipy.optimize}.
+and provide integration for MAP-tuning using \texttt{scipy.optimize}.
 
 Many extensions of the work we have presented are possible. One particularly
 important experiment would be to tune the lower bounds over multiple parameter
