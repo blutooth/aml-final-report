@@ -8,7 +8,6 @@
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -44,15 +43,15 @@ Many methods in Bayesian inference involve computing the likelihood
 $L(\theta)$ of parameters $\theta$ over iid observations
 $X=\{x_{n}\}_{n=1}^{N}$, defined as
 
-\begin{equation}\label{eq:likelihood}
-  L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
-\end{equation}
+\[
+L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
+\]
 
-For example, Monte Carlo Markov Chain (MCMC) are a class of recently resurging
-\cite{diaconis2009markov} methods for sampling posterior distributions
-$P(\theta | X)$ with intractable partition functions $Z = \int P(X|\theta)
-P(\theta) d\theta$. When performing Metropolis-Hastings MCMC, at each iteration
-we need to compute the acceptance probability
+For example, Monte Carlo Markov Chain (MCMC) are a class of methods often
+used to sample posterior distributions $P(\theta | X)$ with intractable
+partition functions $Z = \int P(X|\theta) P(\theta) d\theta$.
+When performing Metropolis-Hastings MCMC, at each iteration we need to compute
+the acceptance probability
 
 \[
 A(\theta'|\theta)=\min\left\{ 1,\frac{q(\theta|\theta')L(\theta')P(\theta')}{q(\theta'|\theta)L(\theta)P(\theta)}\right\}
@@ -64,30 +63,26 @@ prior iteration). Unfortunately, in the era of ``Big Data''
 $N$ may be on the order of petabytes and computing $L(\theta)$ at
 each iteration may be prohibitively expensive.
 
-Many methods have been proposed to tractably estimate \autoref{eq:likelihood}.
-Firefly MC (FlyMC) belongs to a class of methods which approximate $L(\theta)$ using
-smaller tractable subsets of the total dataset. In FlyMC, auxilliary
-``brightness'' variables are first introduced to decrease the number of
-likelihood evaluations per iteration. The Markov chain state and auxilliary
-variables are then successively Gibbs sampled. For certain inference problems,
-FlyMC can provide a significant $3$-$4\times$ speedup over traditional MCMC even
-after accounting for differences in expected sample size.
+\subsubsection*{Rationale for selecting the paper: }
 
-\subsection{Rationale for selecting the paper}
+We chose FlyMC because of the ubiquity of MCMC sampling methods which
+see use not just in the fields of machine learning and Bayesian statistics,
+but also in the fields of computational physics, biology and computational
+linguistics. If large speed-ups could be obtained using the methods
+expounded in FlyMC, this would be of great benefit to many different
+academic communities.
 
-We chose the Firefly MC paper \cite{maclaurin2014firefly} because of the
-ubiquity of MCMC sampling methods which see use not just in the fields of
-machine learning and Bayesian statistics, but also in the fields of
-computational physics, biology, and computational linguistics. Indeed, MCMC can
-be used a universal inference method that is agnostic to the underlying
-likelihood function and prior distribution. As a result, it already forms the
-basis of many state-of-the-art probabilistic programming frameworks
-\cite{prekopa2003probabilistic}.
+Furthermore, in Bayesian statistics, the recent development of MCMC
+methods has been a key step in making it possible to compute large
+hierarchical models that require integrations over hundreds or even
+thousands of unknown parameters, which is an exciting area of further
+research. However, to make MCMC work quickly for data of the order
+of that seen in the 'Big Data' era, any speed-up that is possible
+would be well received.
 
-Furthermmore, Firefly MC addresses the issue of tractable computations at
-scale. With increasingly larger dataset sizes across all research and industry
-domains, scaling proven tools such as MCMC to support larger datasets would be
-of great benefit to many different communities.
+In addition to this, FlyMC is based on a mathematically elegant idea.
+The idea is that when performing inference, all that is necessary
+is to \todo{finish this sentence}
 
 \section{Theory}
 
@@ -400,8 +395,7 @@ likely that a sampled $\theta$ had settled to a value that is a good model param
 The number of log-likelihood evaluations ata  given iteration is constant under the MH-MCMC sampler for
 both soft-max classification and  logistic regression. This is to be expected since likelihood updates
 are computed for all the data-points under vanilla MCMC. In contrast, the parameters for the regression data are drawn
-from a slice-sampler (which can adaptively choose for the size of the changes made)\footnote{http://people.ee.duke.edu/~lcarin/slice.pdf
-}. Given this, we see that the number of likelihood evaluation  tends to oscillate up and down depending on the weight of its 'effective' step-size.
+from a slice-sampler (which can adaptively choose for the size of the changes made)\footnote{http://people.ee.duke.edu/~lcarin/slice.pdf}. Given this, we see that the number of likelihood evaluation  tends to oscillate up and down depending on the weight of its 'effective' step-size.
 
 In all cases the fireFly samplers  compute  likelihood evaluations that
 are an order of magnitude smaller than the corresponding MH and slice samplers.
@@ -417,9 +411,8 @@ MCMC has better mixing ( as demonstrated through autocorrelation), and better li
 a given iteration, crucially they use fewer log-likelihood updates at each iteration. These are
 exactly the same sorts of trends that were observed in the paper by Ryan Adams \footnote{https://github.com/HIPS/firefly-monte-carlo%.
 
-Crucially, however, the effectiveness of the firefly MC interpolation depends on the effective number of samples
-per  next key quantity that ought to be observed is the
-effective sample rate.
+Crucially, however, the effectiveness of the firefly MC interpolation depends on the effective sample size for a given number of iterations.
+If FlyMc is to deliver the improvements in 1000 iteration.
 
 We can calculate a quantity that determines the effective sample rate by
 choosing a log-likelihod value, L, and computing the number of iterations MCMC,
@@ -427,7 +420,7 @@ FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were
 M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,
 the effective sample rate is given by:  (FM/M)*average number of likelihood
 evaluations up until FM. I present our estimates of these evaluations in
-Table~\ref{tb:ess}. The results are based using, the corresponding
+Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding
 MCMC sampler.
 
 \todo{Finish sentence}
@@ -499,6 +492,12 @@ With the SSE from the table and the speedup observed from the plots of number of
     \caption{Number likelihood evaluations}
   \end{subfigure}
   \caption{Robust regression on synthesized data with slice sampler}
+\end{figure}
+
+
+\begin{figure}[htbp]
+    \includegraphics[scale=0.35]{Figures/final/author.png}
+  \caption{\footnote{https://github.com/HIPS/firefly-monte-carlo%.}}
 \end{figure}
 
 
