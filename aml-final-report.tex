@@ -8,8 +8,11 @@
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{esint}
@@ -43,9 +46,9 @@ Many methods in Bayesian inference involve computing the likelihood
 $L(\theta)$ of parameters $\theta$ over iid observations
 $X=\{x_{n}\}_{n=1}^{N}$, defined as
 
-\[
-L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
-\]
+\begin{equation}\label{eq:likelihood}
+  L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
+\end{equation}
 
 For example, Monte Carlo Markov Chain (MCMC) are a class of methods often
 used to sample posterior distributions $P(\theta | X)$ with intractable
@@ -63,76 +66,49 @@ prior iteration). Unfortunately, in the era of ``Big Data''
 $N$ may be on the order of petabytes and computing $L(\theta)$ at
 each iteration may be prohibitively expensive.
 
-\subsubsection*{Rationale for selecting the paper: }
+Many methods have been proposed to tractably estimate \autoref{eq:likelihood}.
+Firefly MC (FlyMC) belongs to a class of methods which approximate $L(\theta)$
+using smaller tractable subsets of the total dataset. In FlyMC, auxilliary
+``brightness'' variables are first introduced to decrease the number of
+likelihood evaluations per iteration. The Markov chain state and auxilliary
+variables are then successively Gibbs sampled. For certain inference problems,
+FlyMC can provide a significant speedup (up to $12\times$ in our experiments,
+\autoref{tab:reproduce}) over traditional MCMC even after accounting for
+differences in expected sample size.
 
-We chose FlyMC because of the ubiquity of MCMC sampling methods which
-see use not just in the fields of machine learning and Bayesian statistics,
-but also in the fields of computational physics, biology and computational
-linguistics. If large speed-ups could be obtained using the methods
-expounded in FlyMC, this would be of great benefit to many different
-academic communities.
+\subsection{Rationale for selecting the paper}
 
-Furthermore, in Bayesian statistics, the recent development of MCMC
-methods has been a key step in making it possible to compute large
-hierarchical models that require integrations over hundreds or even
-thousands of unknown parameters, which is an exciting area of further
-research. However, to make MCMC work quickly for data of the order
-of that seen in the 'Big Data' era, any speed-up that is possible
-would be well received.
+We chose the Firefly MC paper \cite{maclaurin2014firefly} because of the
+ubiquity of MCMC sampling methods which see use not just in the fields of
+machine learning and Bayesian statistics, but also in the fields of
+computational physics, biology, and computational linguistics. Indeed, MCMC can
+be used a universal inference method that is agnostic to the underlying
+likelihood function and prior distribution. As a result, it already forms the
+basis of many state-of-the-art probabilistic programming frameworks
+\cite{prekopa2003probabilistic}.
 
-In addition to this, FlyMC is based on a mathematically elegant idea.
-The idea is that when performing inference, all that is necessary
-is to \todo{finish this sentence}
+Furthermmore, Firefly MC addresses the issue of tractable computations at
+scale. With increasingly larger dataset sizes across all research and industry
+domains, scalability has become an increasingly central concern and proven
+tools such as MCMC have recently begun to receive much attention
+\cite{korattikara2013austerity}.
 
 \section{Theory}
 
-
-The motivation for FlyMC is to achieve speed-ups over typical
-MCMC by estimating a large dataset's likelihood using smaller subsets
-of the data.
-
-It also introduces auxiliary variables, which will act as indicators
-for the points for which the further computation (evaluations of $L_{n}(\theta)$)
-are required. This gives the motivation for the name, FlyMC, since
-these auxiliary variables can be thought of as lighting up when further
-likelihood evaluations are desired. Finally, with these terms in place,
-an intuitive explanation of FlyMc can be given. We have a lower bound
-for the likelihood, $B_{n}(\theta)$, which accounts for a large part
-of the probability mass on the distribution from $\theta$. However,
-there is still a difference $L_{n}(\theta)$-$B_{n}(\theta)$, which
-we are uncertain of and which we would like to compute adjustments
-for through sampling. FlyMCn constructs a way of sampling from this
-residual probability mass, which is hopefully much smaller than $L_{n}$($\theta)$,
-and so may result in large reductions in sampling time. The idea is
-neatly summarised in the graph below:
-
-\begin{figure}[H]
-\begin{centering}
-\includegraphics[scale=0.4]{Figures/gap-fig.png}
-\par\end{centering}
-
-    \protect\caption{Graphical representation of the decomposition of
-    $L_n)$ into a $L_n - B_n$ part associated with bright variables $z_n = 0$
-    and a $B_n$ part associated with dim variables $z_n = 0$ \cite{maclaurin2014firefly}}
-
-
-\end{figure}
-
 Firefly Monte Carly (FlyMC) is a method which addressses the computational
-problem of evaluating $L(\theta)$ for a large number of data points
-$N$ through exact Monte Carlo estimates of the of the full dataset
-likelihood using smaller, tractable subsets. As an auxilliary variable
-method, it works by augmenting the joint distribution with hidden\emph{
-brightness }variables$Z=\{z_{n}\in\left\{ 0,1\right\} \}_{n=1}^{N}$to
-form a \emph{complete data likelihood}
+problem of evaluating $L(\theta)$ for a large number of data points $N$ by
+using exact Monte Carlo estimates of $L(\theta)$ computed over smaller,
+tractable subsets. It works by augmenting the joint distribution with
+hidden\emph{ brightness }variables $Z=\{z_{n}\in\left\{ 0,1\right\}
+\}_{n=1}^{N}$to form a \emph{complete data likelihood}
 
 \[
 P(X,Z|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)
 \]
 
-
-Notice that we can recover the desired likelihoods simply through
-marginalization
+Like other auxilliary variable methods (e.g. Hamiltonian MC
+\cite{brooks2011handbook}), we can recover the desired likelihoods simply
+through marginalization
 
 \[
 \sum_{Z}P(X,Z|\theta)=\sum_{z_{1}}\dots\sum_{z_{N}}\prod_{n=1}^{N}P(|x_{n}|\theta)P(z_{n}|x_{n},\theta)=\prod_{n=1}^{N}P(|x_{n}|\theta)\sum_{z_{n}}P(z_{n}|x_{n},\theta)=L(\theta)
@@ -144,52 +120,95 @@ In FlyMC, the brightness variables are chosen to have Bernoulli distribution
 \begin{equation}
 P(z_{n}|x_{n},\theta)=\left(\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right)^{z_{n}}\left(\frac{B_{n}(\theta)}{L_{n}(\theta)}\right)^{1-z_{n}}\label{eq:brightness}
 \end{equation}
-
-
 where$B_{n}(\theta)$ is a lower bound on the likelihood satisfying
 
 \begin{align}
  & 0\leq B_{n}(\theta)\leq L_{n}(\theta)\label{eq:bn-bound}\\
  & \prod_{n\in A}B_{n}(\theta)\text{ can be efficiently computed for any data subset }A\subset X\label{eq:bn-efficient}
 \end{align}
-
-\ref{eq:bn-bound} is required for \ref{eq:brightness} to be a valid
-probability distribution. To see why \ref{eq:bn-efficient} is necessary,
+\autoref{eq:bn-bound} is required for \autoref{eq:brightness} to be a valid
+probability distribution. To see why \autoref{eq:bn-efficient} is necessary,
 consider computing the complete data likelihood
 
 \begin{align}
-P(X,Z|\theta) & =\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)\nonumber \\
- & =\prod_{n=1}^{N}L_{n}(\theta)\left(\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right)^{z_{n}}\left(\frac{B_{n}(\theta)}{L_{n}(\theta)}\right)^{1-z_{n}}\nonumber \\
- & =\prod_{x_{n}\in X_{bright}}\left(L_{n}(\theta)-B_{n}(\theta)\right)\prod_{x_{n}\in X_{dim}}\left(B_{n}(\theta)\right)\label{eq:bright-dim-decomposition}\\
- & =\prod_{n=1}^{N}B_{n}(\theta)\prod_{x_{n}\in X_{bright}}\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}
+  P(X,Z|\theta) & =\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)\nonumber \\
+  & =\prod_{n=1}^{N}L_{n}(\theta)\left(\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right)^{z_{n}}\left(\frac{B_{n}(\theta)}{L_{n}(\theta)}\right)^{1-z_{n}}\nonumber \\
+  & =\prod_{x_{n}\in X_{bright}}\left(L_{n}(\theta)-B_{n}(\theta)\right)\prod_{x_{n}\in X_{dim}}\left(B_{n}(\theta)\right)\nonumber\\
+  & =\prod_{n=1}^{N}B_{n}(\theta)\prod_{x_{n}\in X_{bright}}\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}\label{eq:bright-dim-decomposition}
 \end{align}
+where we have defined the bright points $X_{bright}=\{x_{n}:z_{n}=1\}$ and dim
+points $X_{dim}=\{x_{n}:z_{n}=0\}$. As a consequence of our choice for
+\autoref{eq:brightness}, \autoref{eq:bright-dim-decomposition} decomposes into
+two products where $\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}$ only
+needs to be evaluated for $x_{n}\in X_{bright}$. For illustration, we plot the
+bright/dim decomposition of $L_n(\theta)$ in \autoref{fig:gap}, as well as show
+an example $(\theta, z_n)$ trajectory.
 
+\begin{figure}[H]
+  \begin{centering}
+    \includegraphics[scale=0.7]{Figures/gap-fig.png}
+  \par\end{centering}
+  \protect\caption{Graphical representation of the decomposition of
+    $L_n$ into a $L_n - B_n$ part associated with bright variables $z_n = 0$
+    and a $B_n$ part associated with dim variables $z_n = 0$ \cite{maclaurin2014firefly}}
+  \label{fig:gap}
+\end{figure}
 
-where the bright points $X_{bright}=\{x_{n}:z_{n}=1\}$ and dim points
-$X_{dim}=\{x_{n}:z_{n}=0\}$give rise to the ``Firefly'' in the
-paper title. Notice that as a consequence of our choice for\ref{eq:brightness},\ref{eq:bright-dim-decomposition}
-decomposes into two products where $\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}$
-only needs to be evaluated for $x_{n}\in X_{bright}$. By assuming
-\ref{eq:bn-efficient}, the other term $\prod_{n=1}^{N}B_{n}(\theta)$
-can be efficiently computed so the computational complexity is determined
-by $X_{bright}$.
+\autoref{eq:bright-dim-decomposition} also illustrates the payoff from assuming
+\autoref{eq:bn-efficient}: by assuming $\prod_{n=1}^{N}B_{n}(\theta)$ term in
+\autoref{eq:bright-dim-decomposition} is efficient, the overall computational
+complexity of evaluating the complete likelihood $P(X,Z|\theta)$ is determined
+by $\#X_{bright}$.
 
+\subsection{Markov chain implementation}
 
-\subsection{Performance comparison}
+Samples $(\theta, \vec{z}) \sim (P(\theta | X), P(Z|X,\theta))$ can be
+generated using Gibbs sampling because of iid assumptions amongst the $X$ and
+lack of interdependence amongst the $Z$. Given current $\theta^{(t)}$ and
+$\vec{z}^{(t)}$, we first fix the parameters $\theta$ and sample the brightness
+variables $z_n$ with Bernoulli probability $\frac{L_n(\theta) -
+B_n(\theta)}{L_n(\theta)}$. Then, the brightnesses $z_n$ are fixed and
+the Markov chain is stepped using Metropolis-Hastings
+\cite{chib1995understanding} or more complex steppers such as
+Metropolis-adjusted Langevin dynamics \cite{roberts2002langevin} when
+the likelihood is differentiable.
 
-Instead of evaluating $L_{n}(\theta)$ over all $N$ points, FlyMC
-only evaluates the likelihood over a subset of points $X_{bright}$.
-This provides a speedup of $\frac{N}{\#X_{bright}}$per iteration.
-However, since the brightness variables $z_{n}$are themselves, to
-understand the performance improvements we consider the expected number
-of bright points $E[\#X_{bright}]$.
+The resampling of the brightness variables at each iteration cause
+each data point to ``blink'' bright and dim across iterations, inspiring
+the name ``Firefly'' given to this method.
 
-Note that for any point $x_{n}$,\ref{eq:brightness} implies the
-probability $x_{n}$is bright is given by $\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$.
-Hence, the number of bright points is given by
+\subsubsection{Implicit sampling}
+
+One possible criticism of the method described above is that direct
+sampling of $z_{n}$ from $N$ Bernoulli distributions, each
+with probability $\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$,
+would again require $N$ evaluations of $L_{n}(\theta)$. This appears to
+mitigate any savings obtained by FlyMC.
+
+Fortunately, this can be mitigated through implicit sampling. Instead of
+recomputing Bernoulli probabilities and directly sampling the $N$ $z_n$s, a
+second MH-MCMC is used for sampling brightnesses. The motivation is that many
+$z_{i}=0$ ideally, hence it makes sense to only consider proposals where each
+dim point has a small $q_{d\to b}\in[0,1]$ probability of becoming bright.
+As computing the acceptance probability requires likelihoods only need to
+be evaluated for the brightness variables proposed to change state, this
+could significantly reduce the number of likelihood evaluations if few
+brightness variables change state across successive Gibbs iterations.
+
+\subsection{Theoretical performance analysis}
+
+FlyMC's speedup over a traditional $O(N)$ likelihood evaluation is
+$\frac{N}{\#X_{bright}}$ per iteration. However, since the brightness variables
+$z_{n}$are themselves, to understand the performance improvements we consider
+the expected number of bright points $E[\#X_{bright}]$.
+
+Note that for any point $x_{n}$, \autoref{eq:brightness} shows that the
+probability $x_{n}$ is bright is given by
+$\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$. Hence, the number of
+bright points is given by
 
 \begin{equation}
-E[\#X_{bright}]=\sum_{n=1}^{N}E[z_{n}]=\sum_{n=1}^{N}\int P(\theta|X)\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}d\theta\label{eq:num-bright}
+  E[\#X_{bright}]=\sum_{n=1}^{N}E[z_{n}]=\sum_{n=1}^{N}\int P(\theta|X)\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}d\theta\label{eq:num-bright}
 \end{equation}
 
 
@@ -200,16 +219,16 @@ the posterior $P(\theta|X)$.
 
 This result makes intuitive sense. Consider the extreme case where
 for all $n$: $B_{n}(\theta)=0$. Then $P(z_{n}=1|x_{n},\theta)=1$
-so every data point is bright (i.e. $X=X_{bright}$) and \ref{eq:bright-dim-decomposition}
+so every data point is bright (i.e. $X=X_{bright}$) and \autoref{eq:bright-dim-decomposition}
 reduces to evaluating the full dataset likelihood $\prod_{n=1}^{N}L_{n}(\theta)$
 as usual.
 
 In the other extreme, if $B_{n}(\theta)=L_{n}(\theta)$ so all data
 points are dim. At first it appears that FlyMC counterintuitively
 offers a $\frac{N}{\#X_{bright}}=\frac{N}{0}=\infty$speedup. However,
-considering \ref{eq:bright-dim-decomposition} reveals that what is
+considering \autoref{eq:bright-dim-decomposition} reveals that what is
 computed is $\prod_{n=1}^{N}B_{n}(\theta)=\prod_{n=1}^{N}L_{n}(\theta)$,
-which by assumption \ref{eq:bn-efficient}can be computed efficiently.
+which by assumption \autoref{eq:bn-efficient}can be computed efficiently.
 But then computing $L(\theta)=\prod_{n=1}^{N}L_{n}(\theta)$ is efficient
 and hence is no longer $O(N)$, contradicting our earlier assumptions.
 
@@ -221,24 +240,22 @@ it an important topic of investigation. In this section, we investigate
 how reasonable and justified are the assumptions required for developing
 FlyMC's theory.
 
-One of our assumptions (\ref{eq:bn-efficient}) was that computation
+One of our assumptions (\autoref{eq:bn-efficient}) was that computation
 of $\prod_{n=1}^{N}B_{n}(\theta)$ be efficient new $\theta$. For
 example, choosing $B_{n}(\theta)$ to be exponential family will make
 computing $\prod_{n=1}^{N}B_{n}(\theta)$ for each new $\theta$ be
 $O(1)$ because
 
 \begin{align*}
-B_{n}(\theta) & \propto\exp(\langle\eta_{n},T(\theta)\rangle)\\
-\prod_{n=1}^{N} & B_{n}(\theta)\propto\exp(\langle\sum_{n=1}^{N}\eta_{n},T(\theta)\rangle)
+B_{n}(\theta) & \propto\exp\left(\left\langle\eta_{n},T(\theta)\right\rangle\right)\\
+\prod_{n=1}^{N} & B_{n}(\theta)\propto\exp\left(\left\langle\sum_{n=1}^{N}\eta_{n},T(\theta)\right\rangle\right)
 \end{align*}
-
-
 and $\sum_{n=1}^{N}\eta_{n}$ can be evaluated once and cached. We
 believe that this assumption is quite restrictive and have had some
 difficulty coming up with functional forms which are not exponential
 family that satisfy this assumption.
 
-The other assumption (\ref{eq:bn-bound}) required $B_{n}(\theta)$
+The other assumption (\autoref{eq:bn-bound}) required $B_{n}(\theta)$
 be a non-negative lower bound for $L_{n}(\theta)$. This is trivially
 satisfied by setting $B_{n}(\theta)=0$, but to be practical we should
 try to find a lower bound with the smallest gap possible. Several
@@ -255,7 +272,7 @@ for use with FlyMC is not immediately obvious.
 In certain cases (e.g. Jaakola and Jordan bound on log logistic),
 $B_{n}$ is part of a parametric family of lower bounds \textbf{$\left\{ B_{n}(\cdot,\xi)\right\} _{\xi}$}where
 $\xi$ is a free parameter. Since the number of bright points determines
-the speedup offered by FlyMC, \ref{eq:num-bright} suggests that we
+the speedup offered by FlyMC, \autoref{eq:num-bright} suggests that we
 should choose $\xi$ to minimize $E\left[\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right]$
 for each datapoint $n$ where the expectation is taken over the posterior
 distribution $P(\theta|X)$.
@@ -282,42 +299,29 @@ $Z$ which are Gibbs sampled along with the original chain's state
 $\theta$. At a high level, the algorithm consists of the following
 steps:
 \begin{enumerate}
-\item Initialize $\theta^{(0)}$
-\item For $t=1,\cdots,N_{iter}$
+  \item Initialize $\theta^{(0)}$
+  \item For $t=1,\cdots,N_{iter}$
 
-\begin{enumerate}
-\item For $n=1,\cdots,N$: sample $z_{n}^{(t)}\sim\text{Bernoulli}\left(\frac{L_{n}(\theta^{(t)})-B_{n}(\theta^{(t)})}{L_{n}(\theta^{(t)})}\right)$
-with $\theta=\theta^{(t)}$fixed
+    \begin{enumerate}
+      \item For $n=1,\cdots,N$: sample $z_{n}^{(t)}\sim\text{Bernoulli}\left(\frac{L_{n}(\theta^{(t)})-B_{n}(\theta^{(t)})}{L_{n}(\theta^{(t)})}\right)$
+        with $\theta=\theta^{(t)}$fixed
+    \end{enumerate}
+  \item Propose $\theta^{(t+1)}\sim q(\theta^{(t+1)}|\theta^{(t)})$
+  \item Compute acceptance probability $A(\theta^{(t+1)}|\theta^{(t)})=\min\left\{ 1,\frac{q(\theta^{(t)}|\theta^{(t+1)})P(X,Z|\theta^{(t+1)})P(\theta^{(t+1)})}{q(\theta^{(t+1)}|\theta^{(t)})P(X,Z|\theta^{(t)})P(\theta^{(t)})}\right\} $
+  \item Repeat from step 2 until chain has mixed, yielding a single sample
+    $z_{n}^{(\infty)}$
 \end{enumerate}
-\item Propose $\theta^{(t+1)}\sim q(\theta^{(t+1)}|\theta^{(t)})$
-\item Compute acceptance probability $A(\theta^{(t+1)}|\theta^{(t)})=\min\left\{ 1,\frac{q(\theta^{(t)}|\theta^{(t+1)})P(X,Z|\theta^{(t+1)})P(\theta^{(t+1)})}{q(\theta^{(t+1)}|\theta^{(t)})P(X,Z|\theta^{(t)})P(\theta^{(t)})}\right\} $
-\item Repeat from step 2 until chain has mixed, yielding a single sample
-$z_{n}^{(\infty)}$
-\end{enumerate}
-In step 4, the complete data likelihood is computed using \ref{eq:bright-dim-decomposition}
+In step 4, the complete data likelihood is computed using \autoref{eq:bright-dim-decomposition}
 and hence only requires evaluating the likelihood over $X_{bright}$.
-
-One possible criticism of the method described above is that step
-2(a) requires sampling $z_{n}$from $N$ Bernoulli distributions each
-with probability $\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$
-and hence direct sampling will again require $N$ evaluations of $L_{n}(\theta)$.
-Fortunately, this can be avoided through \emph{implicit sampling},
-where a second MH-MCMC is used to sample the $z_{i}$. The motivation
-is that ideally many $z_{i}=0$ so it makes sense to only consider
-proposals where each dim point has a small $q_{d\to b}\in[0,1]$ probability
-of becoming bright. Then, evaluating the acceptance probability only
-requires computing $L_{n}(\theta)$ at the $z_{n}$which have been
-proposed to change state.
-
 
 \subsection{Provided reference software}
 
 Reference code is provided by the authors%
-\footnote{https://github.com/HIPS/firefly-monte-carlo%
-}, which provides implementations FlyMC for logistic regression using
-MH-MCMC, softmax using Langevin dynamics, and sparse linear regression
-using slice sampling. The reference implementation includes an implicit
-sampling scheme for sampling brightness variables $z_{i}$.
+\footnote{https://github.com/HIPS/firefly-monte-carlo}, which provides
+implementations FlyMC for logistic regression using MH-MCMC, softmax using
+Langevin dynamics, and sparse linear regression using slice sampling. The
+reference implementation includes an implicit sampling scheme for sampling
+brightness variables $z_{i}$.
 
 
 \subsection{Our contributions to the project}
@@ -325,25 +329,26 @@ sampling scheme for sampling brightness variables $z_{i}$.
 However, the only full example provided is a logistic regression example
 on toy data and is insufficient for reproducing the results reported
 in the paper. We forked
-he authors' code \footnote{https://github.com/feynmanliang/firefly-monte-carlo%
-} and added our own modifications, most importantly:
+he authors' code \footnote{https://github.com/feynmanliang/firefly-monte-carlo}
+and added our own modifications, most importantly:
 \begin{enumerate}
-\item Support for MAP-tuning of the lower bounds, using scipy.optimize
-for MAP estimation
-\item Implementation of regular full-dataset MCMC, which is achieved by
-fixing $\forall i:z_{i}=1$
-\item Improved numerical overflow handling in \texttt{LogisticModel}
-\item Instrumentation for counting log-likelihood evaluations and outputting
-traces of chain state and log likelihood per iteration
-\item Integration, parameter tuning, and reproduction of MNIST Logistic
-Regression, CIFAR-10 Softmax Classification, and Robust Linear Regression
-experimental results
+  \item Support for MAP-tuning of the lower bounds, using scipy.optimize
+    for MAP estimation
+  \item Implementation of regular full-dataset MCMC, which is achieved by
+    fixing $\forall i:z_{i}=1$
+  \item Improved numerical overflow handling in \texttt{LogisticModel}
+  \item Instrumentation for counting log-likelihood evaluations and outputting
+    traces of chain state and log likelihood per iteration
+  \item Integration, parameter tuning, and reproduction of MNIST Logistic
+    Regression, CIFAR-10 Softmax Classification, and Robust Linear Regression
+    experimental results
 \end{enumerate}
 
 We also fixed a significant bug in some caching code provided with
 the reference implementation and submitted our bugfix back upstream
-\footnote{https://github.com/HIPS/firefly-monte-carlo/pull/1%
-}. The problem was that computations of $\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $were
+\footnote{https://github.com/HIPS/firefly-monte-carlo/pull/1}. The problem was
+that computations of $\left\{
+  \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $were
 being cached for vectors $\theta$ and $idx$, but that caching was
 performed over the entire $idx$ vector rather than elementwise. For
 example, if $idx2\subsetneq idx$, then even though $\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx2\right\} \subset\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $
@@ -354,29 +359,27 @@ each iteration, which means that FlyMC will only offer speedups if
 $\#X_{bright}<\frac{N}{2}$.
 
 
-\section{Reproduction experiments}
+\section{Reproduction experiments}\label{sec:experiments}
 
-
-\subsubsection*{The Experiments to be replicated: }
-
-In this practical, we conducted the following three experiments:
+We conducted the following three experiments:
 \begin{itemize}
-\item Logistic regression: For this particular task, we tested we tested
-FlyMC's preformance for the task of classifying 7s and 9s on MNIST,
-with prior $P(\theta)\sim\mathcal{N}(0,I)$.
-\item Softmax classification: For this task, we tested FlyMC's ability to
-fit a softmax classification model on three CIFAR-10 classes (airplane,
-automobile and bird) using Langevin dynamics
-\item Robust linear regression: For logistic regression task, we generated
-synthetic data and evaluated the performance of FlyMC in comparison
-to regular MCMC.
+  \item Logistic regression: For this particular task, we tested we tested
+    FlyMC's preformance for the task of classifying 7s and 9s on MNIST,
+    with prior $P(\theta)\sim\mathcal{N}(0,I)$.
+  \item Softmax classification: For this task, we tested FlyMC's ability to
+    fit a softmax classification model on three CIFAR-10 classes (airplane,
+    automobile and bird) using Langevin dynamics
+  \item Robust linear regression: For logistic regression task, we generated
+    synthetic data and evaluated the performance of FlyMC in comparison
+    to regular MCMC.
 \end{itemize}
 The first two of these three experiments were data-sets used in the
-paper. However, for the third data-set we decided it would be intersting
-to see if the same results claimed by a paper could be found in a
-data-set that was not hand-picked by the authors.
+paper. However, the OPV dataset used in the robust linear regression
+was not publically available in a convenient format. This also gave us
+an opportunity to explore FlyMC's performance fitting a model against
+data where the true model is known.
 
-\subsubsection*{Results}
+\subsection{Results of the three methods}
 
 In this section we will need to discover whether the reductions in likelihood evaluations per iteration that had been
 obtained in FlyMC would dominate the increased burn-in period that is required when sampling using fire-fly Monte Carlo.
@@ -415,30 +418,61 @@ Though FlyMC and FlyMap show worse mixing, and have lower negative log likelihoo
 a given iteration, crucially they use fewer log-likelihood updates at each iteration and are found to be very competitive samplers.
  
 Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding
+\subsection{Reproducing Table 1 from \ref{maclaurin2014firefly}}
+
+\todo{Less exposition about ESS, more about trading off burn in for less evaluations
+and how to measure the effect of burn in}
+
+Crucially, however, the effectiveness of MC interpolation depends
+on the effective sample size for a given number of iterations. If FlyMc is to
+deliver the improvements in 1000 iteration.
+
+We can calculate a quantity that determines the effective sample rate by
+choosing a log-likelihod value, L, and computing the number of iterations MCMC,
+FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were
+M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,
+the effective sample rate is given by:  (FM/M)*average number of likelihood
+evaluations up until FM. I present our estimates of these evaluations in
+\autoref{tab:reproduce}. The results are based using, the corresponding
 MCMC sampler.
 
-\todo{Finish sentence}
- shows the effective sample size (ESS) of regular MCMC, untuned MCMC and
- MAP-tuned FlyMC for the three experiments.
-
+Following \cite{cowles1996markov}, we can quantify slower burn-in
+\autoref{tab:reproduce} shows the effective sample size (ESS) per 1000 iterations of
+regular MCMC, untuned MCMC and MAP-tuned FlyMC for the three experiments.
 \begin{table}[H]
-\centering
-\caption{ESS of regular MCMC, untuned MCMC and MAP-tuned FlyMC for the three experiments}
-\label{tb:ess}
-\begin{tabular}{|l|l|l|l|}
-\hline
-                      & Regular MCMC & Untuned FlyMC & MAP-tuned FlyMC \\ \hline
-Logistic regression   & 3.6          & 0.5           & 0.6             \\ \hline
-Softmax clssification & 7.1          & 4.0           & 3.3             \\ \hline
-Robust regression     & 1.1          & 1.0           & 1.1             \\ \hline
-\end{tabular}
+  \centering
+  \caption{Reproduction of the experiments reported in \cite{maclaurin2014firefly}. We did not
+  reproduce the robust regression with slice sampling experiments because the OPV dataset used
+  by the authors is not available in an easily consumable format.}
+  \label{tab:reproduce}
+  \begin{tabular}{ccp{3.2cm}p{2.3cm}p{2.5cm}}
+    \toprule
+    Data Set & Algorithm & Average likelihood queries per iteration & ESS per 1000 iterations & Relative Speedup \\
+    \midrule
+    \multirow{3}{*}{Logistic Regression}
+    & Regular MCMC     & 12214  &  3.6 & (1) \\
+    & Untuned FlyMC    & 6252   &  0.5 & 0.271 \\
+    & MAP-Tuned FlyMC  & 207    &  0.6 & 9.834 \\
+    \hline
+    \multirow{3}{*}{Softmax classification}
+    & Regular MCMC     & 18000  &  7.1 & (1)\\
+    & Untuned FlyMC    & 7997   &  4.0 & 1.268 \\
+    & MAP-Tuned FlyMC  & 662    &  3.3 & 12.638 \\
+    \hline
+    \multirow{3}{*}{Robust Regression}
+    & Regular MCMC     & NA  &  NA & NA \\
+    & Untuned FlyMC    & NA  &  NA & NA \\
+    & MAP-Tuned FlyMC  & NA  &  NA & NA \\
+    \bottomrule
+  \end{tabular}
 \end{table}
-
-With the SSE from the table and the speedup observed from the plots of number of log-likelihood evaluations per iteration, we can conclude that MAP-tuned FlyMC provides a reasonable speedup while the untuned one is slower than the regular one.
-
-% \todo{Make up some tables about effective sample size and how the reduction in likelihood evaluations is bigger than the drop in ESS}
-
-%\todo{Reference the plots}
+Our results in \autoref{tab:reproduce} show that MAP-tuned FlyMC performs well
+and achieves rougly an order of magnitude relative speedup in all cases.
+Untuned FlyMC, however, can be as much as $5\times$ slower. As evidenced by
+the increased number of likelihood queries, this slowdown is caused by increased
+likelihood evaluations while attaining the same ESS. We suspect the underlying cause
+is due to the larger gap in the untuned lower bound, which following
+\autoref{eq:num-bright} leads to more bright points.
 
 \begin{figure}[htbp]
   \begin{subfigure}[t]{0.32\textwidth}
@@ -491,25 +525,51 @@ With the SSE from the table and the speedup observed from the plots of number of
 
 
 
+\section{Conclusion}
 
-\section{Conclusion }
+From this practical, we saw how Firefly MC introduces auxiliary ``brightness''
+variables to control the computational complexity of each MC iteration while
+still maintaining an exact estimator for the full likelihood. We saw that
+the auxilliary variables were defined using a lower bound $B_n(\theta)$ who's
+tightness to $L_n(\theta)$ is inversely proportional to the probability
+of a point being bright. We saw MAP tuning as ome way to choose lower bounds
+minimize this gap, which in turn minimizes the number of bright points and
+hence maximizes the speedups offered by FlyMC.
 
-%\todo{Write this section, make sure the mention extension work including: minimizing bound over posterior samples instead of MAP tuning (see  ```MAP-tuning the lower bound'')}
+Our experimental results from \autoref{sec:experiments} yielded similar trends
+on all data sets, tasks, and Markov chain steppers (e.g.\ MH, Langevin, slice
+sampler) considered. In all cases, using FlyMC results in a decrease in the
+average number of likelihood evaluations due to how the brightness
+probabilities are defined in \autoref{eq:brightness}. At the same time, ESS
+also decreases because subsets rather than the full dataset are used for
+computing acceptance probabilities.
 
-\textbf{You should end by critically evaluating your work and suggest
-what you would have done given more time.}
+Comparing the ratio of ESS over average likelihood queries can give us a sense
+of relative speedup over regular MCMC accounting for the longer burn in time.
+According to \autoref{tab:reproduce}, we see that untuned FlyMC may perform
+slightly better than regular MCMC but may also be relatively slower. In
+contrast, the MAP tuned FlyMC algorithm consistently achieves speedups $\approx
+10\times$. This highlights the significant impact of the lower bound's gap on
+performance and emphasizes the importance of choosing the lower bound properly.
+Our results in \autoref{tab:reproduce} are very close to those reported in
+Table 1 of \ref{maclaurin2014firefly}, indicating that we were successful
+in replicating the results reported in the original paper.
 
-FlyMC is an elegant framework for MCMC sampling that can lead to speed-ups of an order of magnitude greater than what has been achieved with conventional MCMC samplers.
-Map-tuning FlyMC yielded the fastest samplers with effective sampling weights as low as 20 times that of traditional MCMC.
-We replicated almost almost all the graphs and figures in  the paper, however, we would have liked to generate more tabulated data on effective sample rates than we could have.
+Through completing this practical, we have made a number of contributions
+(Github pull requests) back upstream to Harvard Intelligent Probabilistic
+Systems Group's code repository which address sevaral important bugs and
+optimizations. In particular, we optimize the likelihood caches to work
+elementwise, fix overflow prevention in various areas of the code,
+and provide integration for MAP-tuning using \texstttt{scipy.optimize}.
 
 Many extensions of the work we have presented are possible. One particularly
-important experiment would be to tune the lower bounds over multiple parameters
-sampled from the posterior rather than the single MAP estimate. This
+important experiment would be to tune the lower bounds over multiple parameter
+values sampled from the posterior rather than the single MAP estimate. This
 would ensure a low number of expected bright points, even if we are possibly
 far away from the MAP estimate. Given the significant performance difference
-tuning lower bounds in this manner to yield even lower numbers of bright points
-and hence greater speedups over traditional MCMC.
+between MAP-tuned and untuned FlyMC, we expect tuning lower bounds in this
+manner to yield even lower numbers of bright points and hence greater speedups
+over traditional MCMC.
 
 Another direction for investigation is on the lower bounds $B_n$. The
 assumptions made in assumptions 1 and 2 on $B_n$ are required
