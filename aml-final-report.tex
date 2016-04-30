@@ -32,24 +32,65 @@
 
 \title{Firefly Monte Carlo: Exact MC with data subsets}
 \author{Feynman Liang, Max Chamberlin, Kai Xu}
-
+%
 \maketitle
 
 \tableofcontents
 
-%\todo{Proofread the paper for flow}
+\section{Introduction}
 
-\section{Introduction:}
+Many methods in Bayesian inference involve computing the likelihood
+$L(\theta)$ of parameters $\theta$ over iid observations
+$X=\{x_{n}\}_{n=1}^{N}$, defined as
 
-\subsubsection*{The idea:}
+\[
+L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
+\]
 
-The key motivation for FlyMC is to achieve speed-ups over typical
-MCMC, where we would like to sample some parameter $\theta$ of interest
-given datapoints $x_{1:N}$. FlyMC does this by estimating a large
-data-set's likelihood using smaller subsets of the data.
+For example, Monte Carlo Markov Chain (MCMC) are a class of methods often
+used to sample posterior distributions $P(\theta | X)$ with intractable
+partition functions $Z = \int P(X|\theta) P(\theta) d\theta$.
+When performing Metropolis-Hastings MCMC, at each iteration we need to compute
+the acceptance probability
 
-To work, FlyMC requires a non-negative function $B_{n}(\theta)$ that
-acts as a lower bound on the likelihood, $B_{n}(\theta)\leq L_{n}(\theta)=P(x_{n}|\theta)$.
+\[
+A(\theta'|\theta)=\min\left\{ 1,\frac{q(\theta|\theta')L(\theta')P(\theta')}{q(\theta'|\theta)L(\theta)P(\theta)}\right\}
+\]
+
+This means that each iteration requires at least one evaluation $L(\theta')$
+of the likelihood over all $N$ points ($L(\theta)$ can be cached from the
+prior iteration). Unfortunately, in the era of ``Big Data''
+$N$ may be on the order of petabytes and computing $L(\theta)$ at
+each iteration may be prohibitively expensive.
+
+\subsubsection*{Rationale for selecting the paper: }
+
+We chose FlyMC because of the ubiquity of MCMC sampling methods which
+see use not just in the fields of machine learning and Bayesian statistics,
+but also in the fields of computational physics, biology and computational
+linguistics. If large speed-ups could be obtained using the methods
+expounded in FlyMC, this would be of great benefit to many different
+academic communities.
+
+Furthermore, in Bayesian statistics, the recent development of MCMC
+methods has been a key step in making it possible to compute large
+hierarchical models that require integrations over hundreds or even
+thousands of unknown parameters, which is an exciting area of further
+research. However, to make MCMC work quickly for data of the order
+of that seen in the 'Big Data' era, any speed-up that is possible
+would be well received.
+
+In addition to this, FlyMC is based on a mathematically elegant idea.
+The idea is that when performing inference, all that is necessary
+is to
+
+\section{Theory}
+
+
+The motivation for FlyMC is to achieve speed-ups over typical
+MCMC by estimating a large dataset's likelihood using smaller subsets
+of the data.
+
 It also introduces auxiliary variables, which will act as indicators
 for the points for which the further computation (evaluations of $L_{n}(\theta)$)
 are required. This gives the motivation for the name, FlyMC, since
@@ -76,80 +117,6 @@ neatly summarised in the graph below:
 
 
 \end{figure}
-
-\subsubsection*{Rationale for selecting the paper: }
-
-We chose FlyMC because of the ubiquity of MCMC sampling methods which
-see use not just in the fields of machine learning and Bayesian statistics,
-but also in the fields of computational physics, biology and computational
-linguistics. If large speed-ups could be obtained using the methods
-expounded in FlyMC, this would be of great benefit to many different
-academic communities.
-
-Furthermore, in Bayesian statistics, the recent development of MCMC
-methods has been a key step in making it possible to compute large
-hierarchical models that require integrations over hundreds or even
-thousands of unknown parameters, which is an exciting area of further
-research. However, to make MCMC work quickly for data of the order
-of that seen in the 'Big Data' era, any speed-up that is possible
-would be well received.
-
-In addition to this, FlyMC is based on a mathematically elegant idea.
-The idea is that when performing inference, all that is necessary
-is to
-
-
-\subsubsection*{The Experiments to be replicated: }
-
-
-
-In this practical, we conducted the following three experiments:
-\begin{itemize}
-\item Logistic regression: For this particular task, we tested we tested
-FlyMC's preformance for the task of classifying 7s and 9s on MNIST,
-with prior $P(\theta)\sim\mathcal{N}(0,I)$.
-\item Softmax classification: For this task, we tested FlyMC's ability to
-fit a softmax classification model on three CIFAR-10 classes (airplane,
-automobile and bird) using Langevin dynamics
-\item Robust linear regression: For logistic regression task, we generated
-synthetic data and evaluated the performance of FlyMC in comparison
-to regular MCMC.
-\end{itemize}
-The first two of these three experiments were data-sets used in the
-paper. However, for the third data-set we decided it would be intersting
-to see if the same results claimed by a paper could be found in a
-data-set that was not hand-picked by the authors.
-
-
-\section*{Main Body }
-
-
-
-
-\section{Theory}
-
-Given independent and identically distributed observations $X=\{x_{n}\}_{n=1}^{N}$,
-one is often interested in the \emph{likelihood}
-
-\[
-L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
-\]
-
-
-For example, when performing Metropolis-Hastings MCMC to sample a
-posterior distribution $P(\theta|X)\propto P(X|\theta)P(\theta)$one
-needs to compute the acceptance probability:
-
-\[
-A(\theta'|\theta)=\min\left\{ 1,\frac{q(\theta|\theta')L(\theta')P(\theta')}{q(\theta'|\theta)L(\theta)P(\theta)}\right\}
-\]
-
-
-This means that each iteration requires at least one ($L(\theta)$
-can be cached from the prior iteration) evaluation of the likelihood
-over all $N$ points. Unfortunately, in the era of ``Big Data''
-$N$ may be on the order of petabytes and computing $L(\theta)$ at
-each iteration may be prohibitively expensive.
 
 Firefly Monte Carly (FlyMC) is a method which addressses the computational
 problem of evaluating $L(\theta)$ for a large number of data points
@@ -186,10 +153,6 @@ where$B_{n}(\theta)$ is a lower bound on the likelihood satisfying
  & \prod_{n\in A}B_{n}(\theta)\text{ can be efficiently computed for any data subset }A\subset X\label{eq:bn-efficient}
 \end{align}
 
-\begin{enumerate}
-\item $0\leq B_{n}(\theta)\leq L_{n}(\theta)$
-\item $\prod_{n=1}^{N}B_{n}(\theta)$ can be efficiently computed
-\end{enumerate}
 \ref{eq:bn-bound} is required for \ref{eq:brightness} to be a valid
 probability distribution. To see why \ref{eq:bn-efficient} is necessary,
 consider computing the complete data likelihood
@@ -391,19 +354,41 @@ each iteration, which means that FlyMC will only offer speedups if
 $\#X_{bright}<\frac{N}{2}$.
 
 
-\section{Results}
+\section{Reproduction experiments}
 
-The plots of autocorrelation from the three data-sets display the same  general trends. The autocorrelation curve for MCMC is below that of FlyMC and FlyMap. These results tend to show that FlyMC variant tends to produce samples $\theta$ that have have a greater dependence between themselves. This is unsurprising given that there are fewer likelihood evaluations at each step of FlyMC, which means that there are fewer updates to the posterior of $ p(\theta\ | \theta ) $. 
 
-A further trend that can be noticed is that, at least initially, the negative log posterior for MCMC tends to be greater than either two of the FlyMC variants. This is unsurprising, because at any given iteration, MCMC , will have computed a great deal more likelihood updates for many more points, and so the posterior probabilities of the sampled parameter theta under MCMC, will have had more of an opportunity to adapt to the data-set given  than the Fly variants (at any given iteration). 
+\subsubsection*{The Experiments to be replicated: }
 
-For both soft-max classification and  logistic regression, the number of log-likelihood evaluations at each step remains constant. This is to be expected, since likelihood updates are computed for all the data-points. However, because the parameters for the regression data are sampled using slice-sampling (which essentially involves an adaptive step size) the number of likelihood evaluation  tends to oscillate up and down depending on the weight of the step size.  
+In this practical, we conducted the following three experiments:
+\begin{itemize}
+\item Logistic regression: For this particular task, we tested we tested
+FlyMC's preformance for the task of classifying 7s and 9s on MNIST,
+with prior $P(\theta)\sim\mathcal{N}(0,I)$.
+\item Softmax classification: For this task, we tested FlyMC's ability to
+fit a softmax classification model on three CIFAR-10 classes (airplane,
+automobile and bird) using Langevin dynamics
+\item Robust linear regression: For logistic regression task, we generated
+synthetic data and evaluated the performance of FlyMC in comparison
+to regular MCMC.
+\end{itemize}
+The first two of these three experiments were data-sets used in the
+paper. However, for the third data-set we decided it would be intersting
+to see if the same results claimed by a paper could be found in a
+data-set that was not hand-picked by the authors.
 
-That not withstanding, in all cases FLyMC computes  likelihood evaluations that are an order of magnitude smaller than MCMC. For MNIST logistic regression, approximately 1/12 of the likelihoods    are computed at each stage.  For softmax classification, FlyMC evaluated roughly 1/3  of the likelihoods that regular MCMC evaluated and FlyMap performed even better  evaluating  only 1/6 of the likelihoods that regular MCMC evaluated at each step. 
+\subsubsection*{Results}
 
-Without belabouring the point much further, we can see that exactly the right trends are being seen as we would expect for data of this sort: MCMC  has better mixing, and better likelihoods for a given iteration; whereas FlyMC and FlyMap show worse mixing, and have lower negative log likelihoods at a given iteration, but crucially use fewer log-likelihood updates at each iteration. These are exactly the same sorts of trends that are seen in the original paper.   Having looked at the plots, the next key quantity that ought to be observed is the effective sample rate. 
+The plots of autocorrelation from the three data-sets display the same  general trends. The autocorrelation curve for MCMC is below that of FlyMC and FlyMap. These results tend to show that FlyMC variant tends to produce samples $\theta$ that have have a greater dependence between themselves. This is unsurprising given that there are fewer likelihood evaluations at each step of FlyMC, which means that there are fewer updates to the posterior of $ p(\theta\ | \theta ) $.
 
-We can calculate a quantity that determines the effective sample rate by choosing a log-likelihod value, L, and computing the number of iterations MCMC, FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,  the effective sample rate is given by:  (FM/M)*average number of likelihood evaluations up until FM. I present our estimates of these evaluations in Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding MCMC sampler. 
+A further trend that can be noticed is that, at least initially, the negative log posterior for MCMC tends to be greater than either two of the FlyMC variants. This is unsurprising, because at any given iteration, MCMC , will have computed a great deal more likelihood updates for many more points, and so the posterior probabilities of the sampled parameter theta under MCMC, will have had more of an opportunity to adapt to the data-set given  than the Fly variants (at any given iteration).
+
+For both soft-max classification and  logistic regression, the number of log-likelihood evaluations at each step remains constant. This is to be expected, since likelihood updates are computed for all the data-points. However, because the parameters for the regression data are sampled using slice-sampling (which essentially involves an adaptive step size) the number of likelihood evaluation  tends to oscillate up and down depending on the weight of the step size.
+
+That not withstanding, in all cases FLyMC computes  likelihood evaluations that are an order of magnitude smaller than MCMC. For MNIST logistic regression, approximately 1/12 of the likelihoods    are computed at each stage.  For softmax classification, FlyMC evaluated roughly 1/3  of the likelihoods that regular MCMC evaluated and FlyMap performed even better  evaluating  only 1/6 of the likelihoods that regular MCMC evaluated at each step.
+
+Without belabouring the point much further, we can see that exactly the right trends are being seen as we would expect for data of this sort: MCMC  has better mixing, and better likelihoods for a given iteration; whereas FlyMC and FlyMap show worse mixing, and have lower negative log likelihoods at a given iteration, but crucially use fewer log-likelihood updates at each iteration. These are exactly the same sorts of trends that are seen in the original paper.   Having looked at the plots, the next key quantity that ought to be observed is the effective sample rate.
+
+We can calculate a quantity that determines the effective sample rate by choosing a log-likelihod value, L, and computing the number of iterations MCMC, FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,  the effective sample rate is given by:  (FM/M)*average number of likelihood evaluations up until FM. I present our estimates of these evaluations in Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding MCMC sampler.
 
  shows the effective sample size (ESS) of regular MCMC, untuned MCMC and MAP-tuned FlyMC for the three experiments.
 
@@ -420,7 +405,7 @@ Robust regression     & 1.1          & 1.0           & 1.1             \\ \hline
 \end{tabular}
 \end{table}
 
-With the SSE from the table and the speedup observed from the plots of number of log-likelihood evaluations per iteration, we can conclude that MAP-tuned FlyMC provides a reasonable speedup while the untuned one is slower than the regular one.  
+With the SSE from the table and the speedup observed from the plots of number of log-likelihood evaluations per iteration, we can conclude that MAP-tuned FlyMC provides a reasonable speedup while the untuned one is slower than the regular one.
 
 % \todo{Make up some tables about effective sample size and how the reduction in likelihood evaluations is bigger than the drop in ESS}
 
@@ -482,9 +467,9 @@ With the SSE from the table and the speedup observed from the plots of number of
 \textbf{You should end by critically evaluating your work and suggest
 what you would have done given more time.}
 
-From this practical, we learned that FlyMC is n elegant framework for MCMC sampling that can lead into speed-ups of an order of magnitude greater than what has been seen with conventional MCMC samplers. Map-tuning FlyMC, yielded the fastest samplers with effective sampling weights as low as 20 times that of traditional MCMC.  
+From this practical, we learned that FlyMC is n elegant framework for MCMC sampling that can lead into speed-ups of an order of magnitude greater than what has been seen with conventional MCMC samplers. Map-tuning FlyMC, yielded the fastest samplers with effective sampling weights as low as 20 times that of traditional MCMC.
 
-As a summary of the work undertaken, our practical implementation of Firefly MC led, which was based on the code provided by HIPs, led to several important pull requests on Github which fixed the caching of bright variables. in addition, we had to produce plots, tune parameters, and amend the sampling procedure so that they would work with the various kinds of  data that was investigated in the paper. 
+As a summary of the work undertaken, our practical implementation of Firefly MC led, which was based on the code provided by HIPs, led to several important pull requests on Github which fixed the caching of bright variables. in addition, we had to produce plots, tune parameters, and amend the sampling procedure so that they would work with the various kinds of  data that was investigated in the paper.
 
 A thorough grounding  into the underpinning mathematical background of FlyMc was also given.
 
@@ -495,7 +480,7 @@ important experiment would be to tune the lower bounds over multiple parameter
 values sampled from the posterior rather than the single MAP estimate. This
 would ensure a low number of expected bright points, even if we are possibly
 far away from the MAP estimate. Given the significant performance difference
-between MAP-tuned and untuned FlyMC, we expect
+% between MAP-tuned and untuned FlyMC, we expect
 tuning lower bounds in this manner to yield even lower numbers of bright points
 and hence greater speedups over traditional MCMC.
 
