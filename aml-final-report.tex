@@ -280,7 +280,7 @@ distribution $P(\theta|X)$.
 The authors of FlyMC propose a \emph{MAP-tuned FlyMC} variant where
 the posterior expectation $E\left[\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right]$
 is replaced with the MAP point estimate $\frac{L_{n}(\theta_{MAP})-B_{n}(\theta_{MAP})}{L_{n}(\theta_{MAP})}$
-and$\xi=\text{argmin}_{\xi}L_{n}(\theta_{MAP})-B_{n}(\theta_{MAP})$.$\theta_{MAP}=\text{\text{argmax}}_{\theta}P(\theta|X)$
+and $\xi=\text{argmin}_{\xi}L_{n}(\theta_{MAP})-B_{n}(\theta_{MAP})$.$\theta_{MAP}=\text{\text{argmax}}_{\theta}P(\theta|X)$
 can be found using stochastic gradient descent to handle large data-set
 concerns.
 
@@ -381,10 +381,9 @@ data where the true model is known.
 
 \subsection{Results of the three methods}
 
-In this section we will need to discover whether the reductions in likelihood
-evaluations per iteration that had been obtained in FlyMC would dominate the
-increased burn-in period that is required when sampling using Firefly Monte
-Carlo.
+In this section we present the results of our experiments
+running MCMC (regular full-dataset MCMC), FlyMC (untuned Firefly),
+and FlyMAP (MAP-tuned Firefly) on the tasks described above.
 
 \begin{figure}[h!]
   \begin{subfigure}[t]{0.32\textwidth}
@@ -440,7 +439,7 @@ evaluations at a given iteration is constant under the MH-MCMC sampler for
 Logistic regression on MNIST. Approximately, 12,000 evaluations are computed at
 each iteration. For soft-max classification, figure (c) , this number of
 evaluations is also constant at 3000. In contrast, far fewer likelihood
-evaluations are required under both the FlyMC and FlyMAP models/ In figure (c)
+evaluations are required under both the FlyMC and FlyMAP models. In figure (c)
 we can see that both FlyMAP and FlyMC compute less than a 12th of the likelihood
 computations evaluated by the MCMC sampler. The trend is less marked for both
 soft-max classification and robust regression as can be seen in the respective
@@ -466,10 +465,11 @@ to be more dependent, however they do little to arbitrate int he dispute of what
 fewer likelihood evaluations per iteration or greater burn-in periods. So far, it seems as though the likelihood reductions
 are the dominant term in these computations.
 
-To summarize, exactly same sorts of trends were found in our generated tests as were found in the paper by Ryan Adams \cite{maclaurin2014firefly}
-MCMC has better mixing ( as demonstrated through autocorrelation), and better likelihoods at a given iteration.
-Though FlyMC and FlyMAP show worse mixing, and have lower negative log likelihoods at
-a given iteration, crucially they use fewer log-likelihood updates at each iteration and are found to be very competitive samplers.
+To summarize, we found that Firefly reduced likelihood evaluations but led to
+slower mixing times as indicated by autocorrelations across longer time scales.
+Furthermore, the impact of MAP-tuning is strongly evident with FlyMAP oftentimes
+requiring far less evaluations. These trends were also found in
+the paper \cite{maclaurin2014firefly} we are trying to replicate.
 
 \subsection{Quantifying mixing rates and assessing relative speedup}
 
