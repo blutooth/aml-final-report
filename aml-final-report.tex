@@ -399,7 +399,7 @@ likely that a sampled $\theta$ had settled to a value that is a good model param
 The number of log-likelihood evaluations ata  given iteration is constant under the MH-MCMC sampler for
 both soft-max classification and  logistic regression. This is to be expected since likelihood updates
 are computed for all the data-points under vanilla MCMC. In contrast, the parameters for the regression data are drawn
-from a slice-sampler (which can adaptively choose for the size of the changes made)\footnote{http://people.ee.duke.edu/~lcarin/slice.pdf}. Given this, we see that the number of likelihood evaluation  tends to oscillate up and down depending on the weight of its 'effective' step-size.
+from a slice-sampler \cite{neal2003slice}. Given this, we see that the number of likelihood evaluation  tends to oscillate up and down depending on the weight of its 'effective' step-size.
 
 In all cases the fireFly samplers  compute  likelihood evaluations that
 are an order of magnitude smaller than the corresponding MH and slice samplers.
@@ -501,8 +501,8 @@ With the SSE from the table and the speedup observed from the plots of number of
 
 
 \begin{figure}[htbp]
-    \includegraphics[scale=0.35]{Figures/final/author.png}
-  \caption{\footnote{https://github.com/HIPS/firefly-monte-carlo}}
+    %\includegraphics[scale=0.35]{Figures/final/author.png}
+  \caption{Results reported by authors in \cite{maclaurin2014firefly}}
 \end{figure}
 
 
