@@ -298,17 +298,17 @@ $Z$ which are Gibbs sampled along with the original chain's state
 $\theta$. At a high level, the algorithm consists of the following
 steps:
 \begin{enumerate}
-\item Initialize $\theta^{(0)}$
-\item For $t=1,\cdots,N_{iter}$
+  \item Initialize $\theta^{(0)}$
+  \item For $t=1,\cdots,N_{iter}$
 
-\begin{enumerate}
-\item For $n=1,\cdots,N$: sample $z_{n}^{(t)}\sim\text{Bernoulli}\left(\frac{L_{n}(\theta^{(t)})-B_{n}(\theta^{(t)})}{L_{n}(\theta^{(t)})}\right)$
-with $\theta=\theta^{(t)}$fixed
-\end{enumerate}
-\item Propose $\theta^{(t+1)}\sim q(\theta^{(t+1)}|\theta^{(t)})$
-\item Compute acceptance probability $A(\theta^{(t+1)}|\theta^{(t)})=\min\left\{ 1,\frac{q(\theta^{(t)}|\theta^{(t+1)})P(X,Z|\theta^{(t+1)})P(\theta^{(t+1)})}{q(\theta^{(t+1)}|\theta^{(t)})P(X,Z|\theta^{(t)})P(\theta^{(t)})}\right\} $
-\item Repeat from step 2 until chain has mixed, yielding a single sample
-$z_{n}^{(\infty)}$
+    \begin{enumerate}
+      \item For $n=1,\cdots,N$: sample $z_{n}^{(t)}\sim\text{Bernoulli}\left(\frac{L_{n}(\theta^{(t)})-B_{n}(\theta^{(t)})}{L_{n}(\theta^{(t)})}\right)$
+        with $\theta=\theta^{(t)}$fixed
+    \end{enumerate}
+  \item Propose $\theta^{(t+1)}\sim q(\theta^{(t+1)}|\theta^{(t)})$
+  \item Compute acceptance probability $A(\theta^{(t+1)}|\theta^{(t)})=\min\left\{ 1,\frac{q(\theta^{(t)}|\theta^{(t+1)})P(X,Z|\theta^{(t+1)})P(\theta^{(t+1)})}{q(\theta^{(t+1)}|\theta^{(t)})P(X,Z|\theta^{(t)})P(\theta^{(t)})}\right\} $
+  \item Repeat from step 2 until chain has mixed, yielding a single sample
+    $z_{n}^{(\infty)}$
 \end{enumerate}
 In step 4, the complete data likelihood is computed using \autoref{eq:bright-dim-decomposition}
 and hence only requires evaluating the likelihood over $X_{bright}$.
