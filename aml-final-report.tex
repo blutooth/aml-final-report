@@ -86,58 +86,26 @@ basis of many state-of-the-art probabilistic programming frameworks
 
 Furthermmore, Firefly MC addresses the issue of tractable computations at
 scale. With increasingly larger dataset sizes across all research and industry
-domains, scaling proven tools such as MCMC to support larger datasets would be
-of great benefit to many different communities.
+domains, scalability has become an increasingly central concern and proven
+tools such as MCMC have recently begun to receive much attention
+\cite{korattikara2013austerity}.
 
 \section{Theory}
 
-
-The motivation for FlyMC is to achieve speed-ups over typical
-MCMC by estimating a large dataset's likelihood using smaller subsets
-of the data.
-
-It also introduces auxiliary variables, which will act as indicators
-for the points for which the further computation (evaluations of $L_{n}(\theta)$)
-are required. This gives the motivation for the name, FlyMC, since
-these auxiliary variables can be thought of as lighting up when further
-likelihood evaluations are desired. Finally, with these terms in place,
-an intuitive explanation of FlyMc can be given. We have a lower bound
-for the likelihood, $B_{n}(\theta)$, which accounts for a large part
-of the probability mass on the distribution from $\theta$. However,
-there is still a difference $L_{n}(\theta)$-$B_{n}(\theta)$, which
-we are uncertain of and which we would like to compute adjustments
-for through sampling. FlyMCn constructs a way of sampling from this
-residual probability mass, which is hopefully much smaller than $L_{n}$($\theta)$,
-and so may result in large reductions in sampling time. The idea is
-neatly summarised in the graph below:
-
-\begin{figure}[H]
-\begin{centering}
-\includegraphics[scale=0.4]{Figures/gap-fig.png}
-\par\end{centering}
-
-    \protect\caption{Graphical representation of the decomposition of
-    $L_n)$ into a $L_n - B_n$ part associated with bright variables $z_n = 0$
-    and a $B_n$ part associated with dim variables $z_n = 0$ \cite{maclaurin2014firefly}}
-
-
-\end{figure}
-
 Firefly Monte Carly (FlyMC) is a method which addressses the computational
-problem of evaluating $L(\theta)$ for a large number of data points
-$N$ through exact Monte Carlo estimates of the of the full dataset
-likelihood using smaller, tractable subsets. As an auxilliary variable
-method, it works by augmenting the joint distribution with hidden\emph{
-brightness }variables$Z=\{z_{n}\in\left\{ 0,1\right\} \}_{n=1}^{N}$to
-form a \emph{complete data likelihood}
+problem of evaluating $L(\theta)$ for a large number of data points $N$ by
+using exact Monte Carlo estimates of $L(\theta)$ computed over smaller,
+tractable subsets. It works by augmenting the joint distribution with
+hidden\emph{ brightness }variables $Z=\{z_{n}\in\left\{ 0,1\right\}
+\}_{n=1}^{N}$to form a \emph{complete data likelihood}
 
 \[
 P(X,Z|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)
 \]
 
-
-Notice that we can recover the desired likelihoods simply through
-marginalization
+Like other auxilliary variable methods (e.g. Hamiltonian MC
+\cite{brooks2011handbook}), we can recover the desired likelihoods simply
+through marginalization
 
 \[
 \sum_{Z}P(X,Z|\theta)=\sum_{z_{1}}\dots\sum_{z_{N}}\prod_{n=1}^{N}P(|x_{n}|\theta)P(z_{n}|x_{n},\theta)=\prod_{n=1}^{N}P(|x_{n}|\theta)\sum_{z_{n}}P(z_{n}|x_{n},\theta)=L(\theta)
@@ -149,49 +117,92 @@ In FlyMC, the brightness variables are chosen to have Bernoulli distribution
 \begin{equation}
 P(z_{n}|x_{n},\theta)=\left(\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right)^{z_{n}}\left(\frac{B_{n}(\theta)}{L_{n}(\theta)}\right)^{1-z_{n}}\label{eq:brightness}
 \end{equation}
-
-
 where$B_{n}(\theta)$ is a lower bound on the likelihood satisfying
 
 \begin{align}
  & 0\leq B_{n}(\theta)\leq L_{n}(\theta)\label{eq:bn-bound}\\
  & \prod_{n\in A}B_{n}(\theta)\text{ can be efficiently computed for any data subset }A\subset X\label{eq:bn-efficient}
 \end{align}
-
-\ref{eq:bn-bound} is required for \ref{eq:brightness} to be a valid
-probability distribution. To see why \ref{eq:bn-efficient} is necessary,
+\autoref{eq:bn-bound} is required for \autoref{eq:brightness} to be a valid
+probability distribution. To see why \autoref{eq:bn-efficient} is necessary,
 consider computing the complete data likelihood
 
 \begin{align}
-P(X,Z|\theta) & =\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)\nonumber \\
- & =\prod_{n=1}^{N}L_{n}(\theta)\left(\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right)^{z_{n}}\left(\frac{B_{n}(\theta)}{L_{n}(\theta)}\right)^{1-z_{n}}\nonumber \\
- & =\prod_{x_{n}\in X_{bright}}\left(L_{n}(\theta)-B_{n}(\theta)\right)\prod_{x_{n}\in X_{dim}}\left(B_{n}(\theta)\right)\label{eq:bright-dim-decomposition}\\
- & =\prod_{n=1}^{N}B_{n}(\theta)\prod_{x_{n}\in X_{bright}}\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}
+  P(X,Z|\theta) & =\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)\nonumber \\
+  & =\prod_{n=1}^{N}L_{n}(\theta)\left(\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right)^{z_{n}}\left(\frac{B_{n}(\theta)}{L_{n}(\theta)}\right)^{1-z_{n}}\nonumber \\
+  & =\prod_{x_{n}\in X_{bright}}\left(L_{n}(\theta)-B_{n}(\theta)\right)\prod_{x_{n}\in X_{dim}}\left(B_{n}(\theta)\right)\nonumber\\
+  & =\prod_{n=1}^{N}B_{n}(\theta)\prod_{x_{n}\in X_{bright}}\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}\label{eq:bright-dim-decomposition}
 \end{align}
+where we have defined the bright points $X_{bright}=\{x_{n}:z_{n}=1\}$ and dim
+points $X_{dim}=\{x_{n}:z_{n}=0\}$. As a consequence of our choice for
+\autoref{eq:brightness}, \autoref{eq:bright-dim-decomposition} decomposes into
+two products where $\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}$ only
+needs to be evaluated for $x_{n}\in X_{bright}$. For illustration, we plot the
+bright/dim decomposition of $L_n(\theta)$ in \autoref{fig:gap}, as well as show
+an example $(\theta, z_n)$ trajectory.
 
+\begin{figure}[H]
+  \begin{centering}
+    \includegraphics[scale=0.4]{Figures/gap-fig.png}
+  \par\end{centering}
+  \protect\caption{Graphical representation of the decomposition of
+    $L_n$ into a $L_n - B_n$ part associated with bright variables $z_n = 0$
+    and a $B_n$ part associated with dim variables $z_n = 0$ \cite{maclaurin2014firefly}}
+  \label{fig:gap}
+\end{figure}
 
-where the bright points $X_{bright}=\{x_{n}:z_{n}=1\}$ and dim points
-$X_{dim}=\{x_{n}:z_{n}=0\}$give rise to the ``Firefly'' in the
-paper title. Notice that as a consequence of our choice for\ref{eq:brightness},\ref{eq:bright-dim-decomposition}
-decomposes into two products where $\frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}$
-only needs to be evaluated for $x_{n}\in X_{bright}$. By assuming
-\ref{eq:bn-efficient}, the other term $\prod_{n=1}^{N}B_{n}(\theta)$
-can be efficiently computed so the computational complexity is determined
-by $X_{bright}$.
+\autoref{eq:bright-dim-decomposition} also illustrates the payoff from assuming
+\autoref{eq:bn-efficient}: by assuming $\prod_{n=1}^{N}B_{n}(\theta)$ term in
+\autoref{eq:bright-dim-decomposition} is efficient, the overall computational
+complexity of evaluating the complete likelihood $P(X,Z|\theta)$ is determined
+by $\#X_{bright}$.
 
+\subsection{Markov chain implementation}
 
-\subsection{Performance comparison}
+Samples $(\theta, \vec{z}) \sim (P(\theta | X), P(Z|X,\theta))$ can be
+generated using Gibbs sampling because of iid assumptions amongst the $X$ and
+lack of interdependence amongst the $Z$. Given current $\theta^{(t)}$ and
+$\vec{z}^{(t)}$, we first fix the parameters $\theta$ and sample the brightness
+variables $z_n$ with Bernoulli probability $\frac{L_n(\theta) -
+B_n(\theta)}{L_n(\theta)}$. Then, the brightnesses $z_n$ are fixed and
+the Markov chain is stepped using Metropolis-Hastings
+\cite{chib1995understanding} or more complex steppers such as
+Metropolis-adjusted Langevin dynamics \cite{roberts2002langevin} when
+the likelihood is differentiable.
 
-Instead of evaluating $L_{n}(\theta)$ over all $N$ points, FlyMC
-only evaluates the likelihood over a subset of points $X_{bright}$.
-This provides a speedup of $\frac{N}{\#X_{bright}}$per iteration.
-However, since the brightness variables $z_{n}$are themselves, to
-understand the performance improvements we consider the expected number
-of bright points $E[\#X_{bright}]$.
+The resampling of the brightness variables at each iteration cause
+each data point to ``blink'' bright and dim across iterations, inspiring
+the name ``Firefly'' given to this method.
 
-Note that for any point $x_{n}$,\ref{eq:brightness} implies the
-probability $x_{n}$is bright is given by $\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$.
-Hence, the number of bright points is given by
+\subsubsection{Implicit sampling}
+
+One possible criticism of the method described above is that direct
+sampling of $z_{n}$ from $N$ Bernoulli distributions, each
+with probability $\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$,
+would again require $N$ evaluations of $L_{n}(\theta)$. This appears to
+mitigate any savings obtained by FlyMC.
+
+Fortunately, this can be mitigated through implicit sampling. Instead of
+recomputing Bernoulli probabilities and directly sampling the $N$ $z_n$s, a
+second MH-MCMC is used for sampling brightnesses. The motivation is that many
+$z_{i}=0$ ideally, hence it makes sense to only consider proposals where each
+dim point has a small $q_{d\to b}\in[0,1]$ probability of becoming bright.
+As computing the acceptance probability requires likelihoods only need to
+be evaluated for the brightness variables proposed to change state, this
+could significantly reduce the number of likelihood evaluations if few
+brightness variables change state across successive Gibbs iterations.
+
+\subsection{Theoretical performance analysis}
+
+FlyMC's speedup over a traditional $O(N)$ likelihood evaluation is
+$\frac{N}{\#X_{bright}}$ per iteration. However, since the brightness variables
+$z_{n}$are themselves, to understand the performance improvements we consider
+the expected number of bright points $E[\#X_{bright}]$.
+
+Note that for any point $x_{n}$,\autoref{eq:brightness} implies the probability
+$x_{n}$ is bright is given by
+$\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$. Hence, the number of
+bright points is given by
 
 \begin{equation}
 E[\#X_{bright}]=\sum_{n=1}^{N}E[z_{n}]=\sum_{n=1}^{N}\int P(\theta|X)\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}d\theta\label{eq:num-bright}
@@ -205,16 +216,16 @@ the posterior $P(\theta|X)$.
 
 This result makes intuitive sense. Consider the extreme case where
 for all $n$: $B_{n}(\theta)=0$. Then $P(z_{n}=1|x_{n},\theta)=1$
-so every data point is bright (i.e. $X=X_{bright}$) and \ref{eq:bright-dim-decomposition}
+so every data point is bright (i.e. $X=X_{bright}$) and \autoref{eq:bright-dim-decomposition}
 reduces to evaluating the full dataset likelihood $\prod_{n=1}^{N}L_{n}(\theta)$
 as usual.
 
 In the other extreme, if $B_{n}(\theta)=L_{n}(\theta)$ so all data
 points are dim. At first it appears that FlyMC counterintuitively
 offers a $\frac{N}{\#X_{bright}}=\frac{N}{0}=\infty$speedup. However,
-considering \ref{eq:bright-dim-decomposition} reveals that what is
+considering \autoref{eq:bright-dim-decomposition} reveals that what is
 computed is $\prod_{n=1}^{N}B_{n}(\theta)=\prod_{n=1}^{N}L_{n}(\theta)$,
-which by assumption \ref{eq:bn-efficient}can be computed efficiently.
+which by assumption \autoref{eq:bn-efficient}can be computed efficiently.
 But then computing $L(\theta)=\prod_{n=1}^{N}L_{n}(\theta)$ is efficient
 and hence is no longer $O(N)$, contradicting our earlier assumptions.
 
@@ -226,7 +237,7 @@ it an important topic of investigation. In this section, we investigate
 how reasonable and justified are the assumptions required for developing
 FlyMC's theory.
 
-One of our assumptions (\ref{eq:bn-efficient}) was that computation
+One of our assumptions (\autoref{eq:bn-efficient}) was that computation
 of $\prod_{n=1}^{N}B_{n}(\theta)$ be efficient new $\theta$. For
 example, choosing $B_{n}(\theta)$ to be exponential family will make
 computing $\prod_{n=1}^{N}B_{n}(\theta)$ for each new $\theta$ be
@@ -243,7 +254,7 @@ believe that this assumption is quite restrictive and have had some
 difficulty coming up with functional forms which are not exponential
 family that satisfy this assumption.
 
-The other assumption (\ref{eq:bn-bound}) required $B_{n}(\theta)$
+The other assumption (\autoref{eq:bn-bound}) required $B_{n}(\theta)$
 be a non-negative lower bound for $L_{n}(\theta)$. This is trivially
 satisfied by setting $B_{n}(\theta)=0$, but to be practical we should
 try to find a lower bound with the smallest gap possible. Several
@@ -260,7 +271,7 @@ for use with FlyMC is not immediately obvious.
 In certain cases (e.g. Jaakola and Jordan bound on log logistic),
 $B_{n}$ is part of a parametric family of lower bounds \textbf{$\left\{ B_{n}(\cdot,\xi)\right\} _{\xi}$}where
 $\xi$ is a free parameter. Since the number of bright points determines
-the speedup offered by FlyMC, \ref{eq:num-bright} suggests that we
+the speedup offered by FlyMC, \autoref{eq:num-bright} suggests that we
 should choose $\xi$ to minimize $E\left[\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}\right]$
 for each datapoint $n$ where the expectation is taken over the posterior
 distribution $P(\theta|X)$.
@@ -299,21 +310,8 @@ with $\theta=\theta^{(t)}$fixed
 \item Repeat from step 2 until chain has mixed, yielding a single sample
 $z_{n}^{(\infty)}$
 \end{enumerate}
-In step 4, the complete data likelihood is computed using \ref{eq:bright-dim-decomposition}
+In step 4, the complete data likelihood is computed using \autoref{eq:bright-dim-decomposition}
 and hence only requires evaluating the likelihood over $X_{bright}$.
-
-One possible criticism of the method described above is that step
-2(a) requires sampling $z_{n}$from $N$ Bernoulli distributions each
-with probability $\frac{L_{n}(\theta)-B_{n}(\theta)}{L_{n}(\theta)}$
-and hence direct sampling will again require $N$ evaluations of $L_{n}(\theta)$.
-Fortunately, this can be avoided through \emph{implicit sampling},
-where a second MH-MCMC is used to sample the $z_{i}$. The motivation
-is that ideally many $z_{i}=0$ so it makes sense to only consider
-proposals where each dim point has a small $q_{d\to b}\in[0,1]$ probability
-of becoming bright. Then, evaluating the acceptance probability only
-requires computing $L_{n}(\theta)$ at the $z_{n}$which have been
-proposed to change state.
-
 
 \subsection{Provided reference software}
 
@@ -427,7 +425,7 @@ FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were
 M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,
 the effective sample rate is given by:  (FM/M)*average number of likelihood
 evaluations up until FM. I present our estimates of these evaluations in
-Table~\ref{tb:ess}. The results are based using, the corresponding
+Table~\autoref{tb:ess}. The results are based using, the corresponding
 MCMC sampler.
 
 \todo{Finish sentence}
