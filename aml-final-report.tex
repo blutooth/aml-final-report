@@ -68,9 +68,9 @@ each iteration may be prohibitively expensive.
 
 Many methods have been proposed to tractably estimate \autoref{eq:likelihood}.
 Firefly MC (FlyMC) belongs to a class of methods which approximate $L(\theta)$
-using smaller tractable subsets of the total dataset. In FlyMC, auxilliary
+using smaller tractable subsets of the total dataset. In FlyMC, auxiliary
 ``brightness'' variables are first introduced to decrease the number of
-likelihood evaluations per iteration. The Markov chain state and auxilliary
+likelihood evaluations per iteration. The Markov chain state and auxiliary
 variables are then successively Gibbs sampled. For certain inference problems,
 FlyMC can provide a significant speedup (up to $12\times$ in our experiments,
 \autoref{tab:reproduce}) over traditional MCMC even after accounting for
@@ -87,7 +87,7 @@ likelihood function and prior distribution. As a result, it already forms the
 basis of many state-of-the-art probabilistic programming frameworks
 \cite{prekopa2003probabilistic}.
 
-Furthermmore, Firefly MC addresses the issue of tractable computations at
+Furthermore, Firefly MC addresses the issue of tractable computations at
 scale. With increasingly larger dataset sizes across all research and industry
 domains, scalability has become an increasingly central concern and proven
 tools such as MCMC have recently begun to receive much attention
@@ -95,7 +95,7 @@ tools such as MCMC have recently begun to receive much attention
 
 \section{Theory}
 
-Firefly Monte Carly (FlyMC) is a method which addressses the computational
+Firefly Monte Carly (FlyMC) is a method which addresses the computational
 problem of evaluating $L(\theta)$ for a large number of data points $N$ by
 using exact Monte Carlo estimates of $L(\theta)$ computed over smaller,
 tractable subsets. It works by augmenting the joint distribution with
@@ -106,7 +106,7 @@ hidden\emph{ brightness }variables $Z=\{z_{n}\in\left\{ 0,1\right\}
 P(X,Z|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)P(z_{n}|x_{n},\theta)
 \]
 
-Like other auxilliary variable methods (e.g. Hamiltonian MC
+Like other auxiliary variable methods (e.g. Hamiltonian MC
 \cite{brooks2011handbook}), we can recover the desired likelihoods simply
 through marginalization
 
@@ -163,8 +163,8 @@ by $\#X_{bright}$.
 \subsection{Markov chain implementation}
 
 Samples $(\theta, \vec{z}) \sim (P(\theta | X), P(Z|X,\theta))$ can be
-generated using Gibbs sampling because of iid assumptions amongst the $X$ and
-lack of interdependence amongst the $Z$. Given current $\theta^{(t)}$ and
+generated using Gibbs sampling because of iid assumptions among the $X$ and
+lack of interdependence among the $Z$. Given current $\theta^{(t)}$ and
 $\vec{z}^{(t)}$, we first fix the parameters $\theta$ and sample the brightness
 variables $z_n$ with Bernoulli probability $\frac{L_n(\theta) -
 B_n(\theta)}{L_n(\theta)}$. Then, the brightnesses $z_n$ are fixed and
@@ -364,7 +364,7 @@ $\#X_{bright}<\frac{N}{2}$.
 We conducted the following three experiments:
 \begin{itemize}
   \item Logistic regression: For this particular task, we tested we tested
-    FlyMC's preformance for the task of classifying 7s and 9s on MNIST,
+    FlyMC's performance for the task of classifying 7s and 9s on MNIST,
     with prior $P(\theta)\sim\mathcal{N}(0,I)$.
   \item Softmax classification: For this task, we tested FlyMC's ability to
     fit a softmax classification model on three CIFAR-10 classes (airplane,
@@ -375,7 +375,7 @@ We conducted the following three experiments:
 \end{itemize}
 The first two of these three experiments were data-sets used in the
 paper. However, the OPV dataset used in the robust linear regression
-was not publically available in a convenient format. This also gave us
+was not publicly available in a convenient format. This also gave us
 an opportunity to explore FlyMC's performance fitting a model against
 data where the true model is known.
 
@@ -440,35 +440,35 @@ evaluations at a given iteration is constant under the MH-MCMC sampler for
 Logistic regression on MNIST. Approximately, 12,000 evaluations are computed at
 each iteration. For soft-max classification, figure (c) , this number of
 evaluations is also constant at 3000. In contrast, far fewer likelihood
-evaluations are required under both the flyMC and flyMap models/ In figure (c)
-we can see that both flymap and flymc compute less than a 12th of the likelihood
+evaluations are required under both the FlyMC and FlyMAP models/ In figure (c)
+we can see that both FlyMAP and FlyMC compute less than a 12th of the likelihood
 computations evaluated by the MCMC sampler. The trend is less marked for both
 soft-max classification and robust regression as can be seen in the respective
-figures (c), where FlyMC and FlyMAP seem to return more modest reductions of aroud  1/3 and 1/6 of the likelihoods respectively.
+figures (c), where FlyMC and FlyMAP seem to return more modest reductions of around  1/3 and 1/6 of the likelihoods respectively.
 
-If we had reached the stationary distibution of a markov Chain, this would represent a significant reduction in the
-likelihoods that one would need to compute. However, to an extent flymap's benefits from reduced likelihood computations
+If we had reached the stationary distribution of a Markov Chain, this would represent a significant reduction in the
+likelihoods that one would need to compute. However, to an extent FlyMAP's benefits from reduced likelihood computations
 will be mitigated by a slower burn in period and also more dependent samples. This means that the sampling chains for
-FlyMc and FlyMap would have to be run for longer to generate accurate samples.
+FlyMC and FlyMAP would have to be run for longer to generate accurate samples.
 
 The plots for the negative log posterior (b) gives some indication of the burn-in period, since log-likelihoods for the
-sampled paramaters will only start to stop dropping, when the stationary distribution of the Markov Chain has been reached.
-For logisitic regression, it seems as though these likelihoods that are reached at the 2000th iteration are only reached at the 4000th
-iteration for both flymc and flymap, which seems to suggest a burn in that is around twice as slow as regular MCMC.
+sampled parameters will only start to stop dropping, when the stationary distribution of the Markov Chain has been reached.
+For logistic regression, it seems as though these likelihoods that are reached at the 2000th iteration are only reached at the 4000th
+iteration for both FlyMC and FlyMAP, which seems to suggest a burn in that is around twice as slow as regular MCMC.
 For logistic regression, a reasonable burn in period would be 200 iterations, whereas it seems as though 400 iterations would
-do better justice to the fireFly Monte Carlo methods. For robust regression, these figures seem to be 200 and 350 respectively for
-mcmc and flymc/flymap.
+do better justice to the Firefly Monte Carlo methods. For robust regression, these figures seem to be 200 and 350 respectively for
+MCMC and FlyMC/FlyMAP.
 
 Plots of the auto-correlations can further complement the picture presented by the log-likelihood plots,
 since they can give an idea of the spacing between dependent samples, which can also approximate for
 a particular burn in period. The auto-correlation plots confirm our suspicion that fire-fly MC methods produce samples that tend
-to be more dependent, however they do little to arbitrate int he dispute of what term will dominate when perfoming FlyMC:
+to be more dependent, however they do little to arbitrate int he dispute of what term will dominate when performing FlyMC:
 fewer likelihood evaluations per iteration or greater burn-in periods. So far, it seems as though the likelihood reductions
 are the dominant term in these computations.
 
-To summarise, exactly same sorts of trends were found in our generated tests as were found in the paper by Ryan Adams \cite{maclaurin2014firefly}
+To summarize, exactly same sorts of trends were found in our generated tests as were found in the paper by Ryan Adams \cite{maclaurin2014firefly}
 MCMC has better mixing ( as demonstrated through autocorrelation), and better likelihoods at a given iteration.
-Though FlyMC and FlyMap show worse mixing, and have lower negative log likelihoods at
+Though FlyMC and FlyMAP show worse mixing, and have lower negative log likelihoods at
 a given iteration, crucially they use fewer log-likelihood updates at each iteration and are found to be very competitive samplers.
 
 \subsection{Quantifying mixing rates and assessing relative speedup}
@@ -513,7 +513,7 @@ speedups.
 \end{table}
 
 Our results show that MAP-tuned FlyMC performs well
-and achieves rougly an order of magnitude relative speedup in all cases.
+and achieves roughly an order of magnitude relative speedup in all cases.
 Untuned FlyMC, however, can be as much as $5\times$ slower. As evidenced by
 the increased number of likelihood queries, this slowdown is caused by increased
 likelihood evaluations while attaining the same ESS. We suspect the underlying cause
@@ -525,9 +525,9 @@ is due to the larger gap in the untuned lower bound, which following
 From this practical, we saw how Firefly MC introduces auxiliary ``brightness''
 variables to control the computational complexity of each MC iteration while
 still maintaining an exact estimator for the full likelihood. We saw that
-the auxilliary variables were defined using a lower bound $B_n(\theta)$ who's
+the auxiliary variables were defined using a lower bound $B_n(\theta)$ who's
 tightness to $L_n(\theta)$ is inversely proportional to the probability
-of a point being bright. We saw MAP tuning as ome way to choose lower bounds
+of a point being bright. We saw MAP tuning as one way to choose lower bounds
 minimize this gap, which in turn minimizes the number of bright points and
 hence maximizes the speedups offered by FlyMC.
 
@@ -547,12 +547,12 @@ contrast, the MAP tuned FlyMC algorithm consistently achieves speedups $\approx
 10\times$. This highlights the significant impact of the lower bound's gap on
 performance and emphasizes the importance of choosing the lower bound properly.
 Our results in \autoref{tab:reproduce} are very close to those reported in
-Table 1 of \ref{maclaurin2014firefly}, indicating that we were successful
+Table 1 of \cite{maclaurin2014firefly}, indicating that we were successful
 in replicating the results reported in the original paper.
 
 Through completing this practical, we have made a number of contributions
 (Github pull requests) back upstream to Harvard Intelligent Probabilistic
-Systems Group's code repository which address sevaral important bugs and
+Systems Group's code repository which address several important bugs and
 optimizations. In particular, we optimize the likelihood caches to work
 elementwise, fix overflow prevention in various areas of the code,
 and provide integration for MAP-tuning using \texttt{scipy.optimize}.
