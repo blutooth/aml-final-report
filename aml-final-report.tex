@@ -8,6 +8,7 @@
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -63,28 +64,6 @@ prior iteration). Unfortunately, in the era of ``Big Data''
 $N$ may be on the order of petabytes and computing $L(\theta)$ at
 each iteration may be prohibitively expensive.
 
-<<<<<<< HEAD
-\subsubsection*{Rationale for selecting the paper: }
-
-We chose FlyMC because of the ubiquity of MCMC sampling methods which
-see use not just in the fields of machine learning and Bayesian statistics,
-but also in the fields of computational physics, biology and computational
-linguistics. If large speed-ups could be obtained using the methods
-expounded in FlyMC, this would be of great benefit to many different
-academic communities.
-
-Furthermore, in Bayesian statistics, the recent development of MCMC
-methods has been a key step in making it possible to compute large
-hierarchical models that require integrations over hundreds or even
-thousands of unknown parameters, which is an exciting area of further
-research. However, to make MCMC work quickly for data of the order
-of that seen in the 'Big Data' era, any speed-up that is possible
-would be well received.
-
-In addition to this, FlyMC is based on a mathematically elegant idea.
-The idea is that when performing inference, all that is necessary
-is to \todo{finish this sentence}
-=======
 Many methods have been proposed to tractably estimate \autoref{eq:likelihood}.
 Firefly MC (FlyMC) belongs to a class of methods which approximate $L(\theta)$ using
 smaller tractable subsets of the total dataset. In FlyMC, auxilliary
@@ -110,7 +89,6 @@ scale. With increasingly larger dataset sizes across all research and industry
 domains, scalability has become an increasingly central concern and proven
 tools such as MCMC have recently begun to receive much attention
 \cite{korattikara2013austerity}.
->>>>>>> FETCH_HEAD
 
 \section{Theory}
 
@@ -165,7 +143,7 @@ an example $(\theta, z_n)$ trajectory.
 
 \begin{figure}[H]
   \begin{centering}
-    \includegraphics[scale=0.4]{Figures/gap-fig.png}
+    \includegraphics[scale=0.7]{Figures/gap-fig.png}
   \par\end{centering}
   \protect\caption{Graphical representation of the decomposition of
     $L_n$ into a $L_n - B_n$ part associated with bright variables $z_n = 0$
@@ -338,11 +316,11 @@ and hence only requires evaluating the likelihood over $X_{bright}$.
 \subsection{Provided reference software}
 
 Reference code is provided by the authors%
-\footnote{https://github.com/HIPS/firefly-monte-carlo%
-}, which provides implementations FlyMC for logistic regression using
-MH-MCMC, softmax using Langevin dynamics, and sparse linear regression
-using slice sampling. The reference implementation includes an implicit
-sampling scheme for sampling brightness variables $z_{i}$.
+\footnote{https://github.com/HIPS/firefly-monte-carlo}, which provides
+implementations FlyMC for logistic regression using MH-MCMC, softmax using
+Langevin dynamics, and sparse linear regression using slice sampling. The
+reference implementation includes an implicit sampling scheme for sampling
+brightness variables $z_{i}$.
 
 
 \subsection{Our contributions to the project}
@@ -350,25 +328,26 @@ sampling scheme for sampling brightness variables $z_{i}$.
 However, the only full example provided is a logistic regression example
 on toy data and is insufficient for reproducing the results reported
 in the paper. We forked
-he authors' code \footnote{https://github.com/feynmanliang/firefly-monte-carlo%
-} and added our own modifications, most importantly:
+he authors' code \footnote{https://github.com/feynmanliang/firefly-monte-carlo}
+and added our own modifications, most importantly:
 \begin{enumerate}
-\item Support for MAP-tuning of the lower bounds, using scipy.optimize
-for MAP estimation
-\item Implementation of regular full-dataset MCMC, which is achieved by
-fixing $\forall i:z_{i}=1$
-\item Improved numerical overflow handling in \texttt{LogisticModel}
-\item Instrumentation for counting log-likelihood evaluations and outputting
-traces of chain state and log likelihood per iteration
-\item Integration, parameter tuning, and reproduction of MNIST Logistic
-Regression, CIFAR-10 Softmax Classification, and Robust Linear Regression
-experimental results
+  \item Support for MAP-tuning of the lower bounds, using scipy.optimize
+    for MAP estimation
+  \item Implementation of regular full-dataset MCMC, which is achieved by
+    fixing $\forall i:z_{i}=1$
+  \item Improved numerical overflow handling in \texttt{LogisticModel}
+  \item Instrumentation for counting log-likelihood evaluations and outputting
+    traces of chain state and log likelihood per iteration
+  \item Integration, parameter tuning, and reproduction of MNIST Logistic
+    Regression, CIFAR-10 Softmax Classification, and Robust Linear Regression
+    experimental results
 \end{enumerate}
 
 We also fixed a significant bug in some caching code provided with
 the reference implementation and submitted our bugfix back upstream
-\footnote{https://github.com/HIPS/firefly-monte-carlo/pull/1%
-}. The problem was that computations of $\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $were
+\footnote{https://github.com/HIPS/firefly-monte-carlo/pull/1}. The problem was
+that computations of $\left\{
+  \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $were
 being cached for vectors $\theta$ and $idx$, but that caching was
 performed over the entire $idx$ vector rather than elementwise. For
 example, if $idx2\subsetneq idx$, then even though $\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx2\right\} \subset\left\{ \frac{L_{n}(\theta)-B_{n}(\theta)}{B_{n}(\theta)}:n\in idx\right\} $
@@ -434,7 +413,8 @@ To summarise, we can see exactly the right sort of trends that we would expect t
 MCMC has better mixing ( as demonstrated through autocorrelation), and better likelihoods at a given iteration
 (it has seen more of the data); Though FlyMC and FlyMap show worse mixing, and have lower negative log likelihoods at
 a given iteration, crucially they use fewer log-likelihood updates at each iteration. These are
-exactly the same sorts of trends that were observed in the paper by Ryan Adams \footnote{https://github.com/HIPS/firefly-monte-carlo%.
+exactly the same sorts of trends that were observed in the paper by Ryan Adams
+\footnote{https://github.com/HIPS/firefly-monte-carlo}.
 
 Crucially, however, the effectiveness of the firefly MC interpolation depends on the effective sample size for a given number of iterations.
 If FlyMc is to deliver the improvements in 1000 iteration.
@@ -445,11 +425,7 @@ FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were
 M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,
 the effective sample rate is given by:  (FM/M)*average number of likelihood
 evaluations up until FM. I present our estimates of these evaluations in
-<<<<<<< HEAD
-Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding
-=======
-Table~\autoref{tb:ess}. The results are based using, the corresponding
->>>>>>> FETCH_HEAD
+\autoref{tb:ess}. The results are based using, the corresponding
 MCMC sampler.
 
 \todo{Finish sentence}
@@ -526,11 +502,11 @@ With the SSE from the table and the speedup observed from the plots of number of
 
 \begin{figure}[htbp]
     \includegraphics[scale=0.35]{Figures/final/author.png}
-  \caption{\footnote{https://github.com/HIPS/firefly-monte-carlo%.}}
+  \caption{\footnote{https://github.com/HIPS/firefly-monte-carlo}}
 \end{figure}
 
 
-\section{Conclusion }
+\section{Conclusion}
 
 %\todo{Write this section, make sure the mention extension work including: minimizing bound over posterior samples instead of MAP tuning (see  ```MAP-tuning the lower bound'')}
 
