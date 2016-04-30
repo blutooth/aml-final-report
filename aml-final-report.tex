@@ -8,6 +8,7 @@
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -43,15 +44,15 @@ Many methods in Bayesian inference involve computing the likelihood
 $L(\theta)$ of parameters $\theta$ over iid observations
 $X=\{x_{n}\}_{n=1}^{N}$, defined as
 
-\[
-L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
-\]
+\begin{equation}\label{eq:likelihood}
+  L(\theta)=P(X|\theta)=\prod_{n=1}^{N}P(x_{n}|\theta)=\prod_{n=1}^{N}L_{n}(\theta)
+\end{equation}
 
-For example, Monte Carlo Markov Chain (MCMC) are a class of methods often
-used to sample posterior distributions $P(\theta | X)$ with intractable
-partition functions $Z = \int P(X|\theta) P(\theta) d\theta$.
-When performing Metropolis-Hastings MCMC, at each iteration we need to compute
-the acceptance probability
+For example, Monte Carlo Markov Chain (MCMC) are a class of recently resurging
+\cite{diaconis2009markov} methods for sampling posterior distributions
+$P(\theta | X)$ with intractable partition functions $Z = \int P(X|\theta)
+P(\theta) d\theta$. When performing Metropolis-Hastings MCMC, at each iteration
+we need to compute the acceptance probability
 
 \[
 A(\theta'|\theta)=\min\left\{ 1,\frac{q(\theta|\theta')L(\theta')P(\theta')}{q(\theta'|\theta)L(\theta)P(\theta)}\right\}
@@ -63,26 +64,30 @@ prior iteration). Unfortunately, in the era of ``Big Data''
 $N$ may be on the order of petabytes and computing $L(\theta)$ at
 each iteration may be prohibitively expensive.
 
-\subsubsection*{Rationale for selecting the paper: }
+Many methods have been proposed to tractably estimate \autoref{eq:likelihood}.
+Firefly MC (FlyMC) belongs to a class of methods which approximate $L(\theta)$ using
+smaller tractable subsets of the total dataset. In FlyMC, auxilliary
+``brightness'' variables are first introduced to decrease the number of
+likelihood evaluations per iteration. The Markov chain state and auxilliary
+variables are then successively Gibbs sampled. For certain inference problems,
+FlyMC can provide a significant $3$-$4\times$ speedup over traditional MCMC even
+after accounting for differences in expected sample size.
 
-We chose FlyMC because of the ubiquity of MCMC sampling methods which
-see use not just in the fields of machine learning and Bayesian statistics,
-but also in the fields of computational physics, biology and computational
-linguistics. If large speed-ups could be obtained using the methods
-expounded in FlyMC, this would be of great benefit to many different
-academic communities.
+\subsection{Rationale for selecting the paper}
 
-Furthermore, in Bayesian statistics, the recent development of MCMC
-methods has been a key step in making it possible to compute large
-hierarchical models that require integrations over hundreds or even
-thousands of unknown parameters, which is an exciting area of further
-research. However, to make MCMC work quickly for data of the order
-of that seen in the 'Big Data' era, any speed-up that is possible
-would be well received.
+We chose the Firefly MC paper \cite{maclaurin2014firefly} because of the
+ubiquity of MCMC sampling methods which see use not just in the fields of
+machine learning and Bayesian statistics, but also in the fields of
+computational physics, biology, and computational linguistics. Indeed, MCMC can
+be used a universal inference method that is agnostic to the underlying
+likelihood function and prior distribution. As a result, it already forms the
+basis of many state-of-the-art probabilistic programming frameworks
+\cite{prekopa2003probabilistic}.
 
-In addition to this, FlyMC is based on a mathematically elegant idea.
-The idea is that when performing inference, all that is necessary
-is to \todo{finish this sentence}
+Furthermmore, Firefly MC addresses the issue of tractable computations at
+scale. With increasingly larger dataset sizes across all research and industry
+domains, scaling proven tools such as MCMC to support larger datasets would be
+of great benefit to many different communities.
 
 \section{Theory}
 
@@ -423,7 +428,7 @@ FlyMap and FlyMC took to reach that log likelihood. Suppose these numbers were
 M, FM and FMC respectively for each of MCMC, FlyMap and FlyMC. Then for FlyMap,
 the effective sample rate is given by:  (FM/M)*average number of likelihood
 evaluations up until FM. I present our estimates of these evaluations in
-Table~\ref{}Table~\ref{tb:ess}. The results are based using, the corresponding
+Table~\ref{tb:ess}. The results are based using, the corresponding
 MCMC sampler.
 
 \todo{Finish sentence}
